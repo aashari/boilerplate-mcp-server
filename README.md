@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/aashari-boilerplate-mcp-server-badge.png)](https://mseep.ai/app/aashari-boilerplate-mcp-server)
+
 # Boilerplate MCP Server
 
 This project serves as a foundation for developing custom Model Context Protocol (MCP) servers that connect AI assistants to external data sources or APIs. It provides a complete architecture pattern, a working example tool, and development infrastructure ready for extension.
