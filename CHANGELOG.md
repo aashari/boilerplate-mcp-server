@@ -1,3 +1,10 @@
+## [1.5.10](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.9...v1.5.10) (2025-05-14)
+
+
+### Bug Fixes
+
+* remove Dockerfile and smithery.yaml ([582e9f9](https://github.com/aashari/boilerplate-mcp-server/commit/582e9f9e66087fd2211d6fcf1aaa79c9ee54a123))
+
 ## [1.5.9](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.8...v1.5.9) (2025-05-13)
 
 
