@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.10...v1.6.0) (2025-05-15)
+
+
+### Features
+
+* enhanced error handling across the application ([75aa905](https://github.com/aashari/boilerplate-mcp-server/commit/75aa90528e615d1c1a9a411ddd1bf1931edfde61))
+
 ## [1.5.10](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.9...v1.5.10) (2025-05-14)
 
 
