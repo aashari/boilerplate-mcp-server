@@ -6,6 +6,7 @@ import { ControllerResponse } from '../types/common.types.js';
 import { IpAddressToolArgsType } from '../tools/ipaddress.types.js';
 import { config } from '../utils/config.util.js';
 import { McpError } from '../utils/error.util.js';
+import { buildErrorContext } from '../utils/error-handler.util.js';
 
 /**
  * @namespace IpAddressController
@@ -121,12 +122,16 @@ async function get(
 			throw error;
 		}
 	} catch (error) {
-		throw handleControllerError(error, {
-			entityType: 'IP Address',
-			operation: 'get',
-			source: 'controllers/ipaddress.controller.ts@get',
-			additionalInfo: { ipAddress, options },
-		});
+		throw handleControllerError(
+			error,
+			buildErrorContext(
+				'IP Address',
+				'get',
+				'controllers/ipaddress.controller.ts@get',
+				ipAddress || 'current device',
+				{ options },
+			),
+		);
 	}
 }
 

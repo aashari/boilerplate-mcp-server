@@ -1,52 +1,194 @@
-import ipApiService from './vendor.ip-api.com.service.js';
+import { jest } from '@jest/globals';
 import { ErrorType, McpError } from '../utils/error.util.js';
+import ipApiService from './vendor.ip-api.com.service.js';
 
-describe('Vendor ip-api.com Service', () => {
-	describe('get: current IP address', () => {
-		it('should return a valid IP address', async () => {
-			// Call the function with the real API
-			const result = await ipApiService.get();
+// Mock the transport module
+jest.mock('../utils/transport.util.js', () => ({
+	fetchIpApi: jest.fn(),
+	getIpApiCredentials: jest.fn().mockReturnValue({}),
+}));
 
-			// Verify the result is a valid IP address format
-			expect(result.query).toMatch(/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/);
-		}, 10000); // Increase timeout for API call
+// Import the mocked transport module and explicitly type it
+import * as transportModule from '../utils/transport.util.js';
+const mockFetchIpApi = transportModule.fetchIpApi as jest.MockedFunction<
+	typeof transportModule.fetchIpApi
+>;
+
+describe('vendor.ip-api.com.service', () => {
+	// Reset mocks before each test
+	beforeEach(() => {
+		jest.clearAllMocks();
 	});
 
-	describe('get: specific IP address', () => {
-		it('should return details for a valid IP address', async () => {
-			// Use a known public IP address for testing
-			const ipAddress = '8.8.8.8'; // Google's public DNS
+	describe('get', () => {
+		it('should return valid IP details for a successful API response', async () => {
+			// Mock a successful API response
+			const mockApiResponse = {
+				status: 'success',
+				country: 'United States',
+				countryCode: 'US',
+				region: 'CA',
+				regionName: 'California',
+				city: 'Mountain View',
+				zip: '94043',
+				lat: 37.4224,
+				lon: -122.085,
+				timezone: 'America/Los_Angeles',
+				isp: 'Google LLC',
+				org: 'Google LLC',
+				as: 'AS15169 Google LLC',
+				query: '8.8.8.8',
+			};
 
-			// Call the function with the real API
-			const result = await ipApiService.get(ipAddress);
+			// Setup mock implementation
+			mockFetchIpApi.mockResolvedValue(mockApiResponse);
 
-			// Verify the response contains expected fields
-			expect(result).toHaveProperty('query', ipAddress);
-			expect(result).toHaveProperty('status', 'success');
-			expect(result).toHaveProperty('country');
-			expect(result).toHaveProperty('countryCode');
-			expect(result).toHaveProperty('region');
-			expect(result).toHaveProperty('regionName');
-			expect(result).toHaveProperty('city');
-			expect(result).toHaveProperty('timezone');
-		}, 10000); // Increase timeout for API call
+			// Call the service
+			const result = await ipApiService.get('8.8.8.8');
 
-		it('should handle invalid IP addresses', async () => {
-			// Use an invalid IP address
-			const invalidIp = 'invalid-ip';
+			// Verify it returns the expected data
+			expect(result).toEqual(mockApiResponse);
+			expect(mockFetchIpApi).toHaveBeenCalledWith(
+				'8.8.8.8',
+				expect.any(Object),
+			);
+		});
 
-			// Call the function with the real API and expect it to throw an McpError
-			await expect(ipApiService.get(invalidIp)).rejects.toThrow(McpError);
+		it('should properly handle private IP address errors', async () => {
+			// Mock a failure response with 'private range'
+			const mockPrivateResponse = {
+				status: 'fail',
+				message: 'private range',
+				query: '192.168.1.1',
+			};
 
-			// Try to get the error to verify its properties
+			mockFetchIpApi.mockResolvedValue(mockPrivateResponse);
+
+			// Call the service and expect it to throw
+			await expect(ipApiService.get('192.168.1.1')).rejects.toThrow(
+				McpError,
+			);
+
+			// Try/catch to get the specific error
 			try {
-				await ipApiService.get(invalidIp);
+				await ipApiService.get('192.168.1.1');
 			} catch (error) {
-				// Verify the error is an McpError with the correct type
 				expect(error).toBeInstanceOf(McpError);
 				expect((error as McpError).type).toBe(ErrorType.API_ERROR);
-				expect((error as McpError).message).toContain('IP API error');
+				expect((error as McpError).statusCode).toBe(400);
+				expect((error as McpError).message).toContain(
+					'Private IP addresses are not supported',
+				);
+				expect((error as McpError).originalError).toBe(
+					mockPrivateResponse,
+				);
 			}
-		}, 10000); // Increase timeout for API call
+		});
+
+		it('should properly handle reserved range IP address errors', async () => {
+			// Mock a failure response with 'reserved range'
+			const mockReservedResponse = {
+				status: 'fail',
+				message: 'reserved range',
+				query: '127.0.0.1',
+			};
+
+			mockFetchIpApi.mockResolvedValue(mockReservedResponse);
+
+			// Try/catch to get the specific error
+			try {
+				await ipApiService.get('127.0.0.1');
+			} catch (error) {
+				expect(error).toBeInstanceOf(McpError);
+				expect((error as McpError).type).toBe(ErrorType.API_ERROR);
+				expect((error as McpError).statusCode).toBe(400);
+				expect((error as McpError).message).toContain(
+					'Reserved IP addresses are not supported',
+				);
+				expect((error as McpError).originalError).toBe(
+					mockReservedResponse,
+				);
+			}
+		});
+
+		it('should properly handle generic API failures', async () => {
+			// Mock a generic failure response
+			const mockFailureResponse = {
+				status: 'fail',
+				message: 'unknown error',
+				query: '8.8.8.8',
+			};
+
+			mockFetchIpApi.mockResolvedValue(mockFailureResponse);
+
+			// Try/catch to get the specific error
+			try {
+				await ipApiService.get('8.8.8.8');
+			} catch (error) {
+				expect(error).toBeInstanceOf(McpError);
+				expect((error as McpError).type).toBe(ErrorType.API_ERROR);
+				expect((error as McpError).statusCode).toBe(400);
+				expect((error as McpError).message).toContain('IP API error');
+				expect((error as McpError).originalError).toBe(
+					mockFailureResponse,
+				);
+			}
+		});
+
+		it('should handle Zod validation errors for malformed responses', async () => {
+			// Mock an incomplete response that will fail Zod validation
+			const mockInvalidResponse = {
+				status: 'success',
+				// Missing required fields
+			};
+
+			mockFetchIpApi.mockResolvedValue(mockInvalidResponse);
+
+			// Call the service and expect it to throw a validation error
+			try {
+				await ipApiService.get('8.8.8.8');
+			} catch (error) {
+				expect(error).toBeInstanceOf(McpError);
+				expect((error as McpError).type).toBe(ErrorType.API_ERROR);
+				expect((error as McpError).statusCode).toBe(500);
+				expect((error as McpError).message).toContain(
+					'API response validation failed',
+				);
+			}
+		});
+
+		it('should handle network errors from the transport layer', async () => {
+			// Mock a network error
+			const networkError = new Error('ECONNREFUSED');
+			mockFetchIpApi.mockRejectedValue(networkError);
+
+			// Call the service and expect it to throw a network error
+			try {
+				await ipApiService.get('8.8.8.8');
+			} catch (error) {
+				expect(error).toBeInstanceOf(McpError);
+				expect((error as McpError).originalError).toBe(networkError);
+			}
+		});
+
+		it('should pass through McpErrors from the transport layer', async () => {
+			// Mock a transport layer McpError
+			const transportError = new McpError(
+				'Transport error',
+				ErrorType.API_ERROR,
+				429,
+				{ cause: 'Rate limited' },
+			);
+			mockFetchIpApi.mockRejectedValue(transportError);
+
+			// Call the service and expect it to pass through the McpError
+			try {
+				await ipApiService.get('8.8.8.8');
+			} catch (error) {
+				expect(error).toBe(transportError); // Should be the same error instance
+				expect((error as McpError).type).toBe(ErrorType.API_ERROR);
+				expect((error as McpError).statusCode).toBe(429);
+			}
+		});
 	});
 });

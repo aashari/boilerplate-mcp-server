@@ -97,10 +97,42 @@ export function ensureMcpError(error: unknown): McpError {
 }
 
 /**
+ * Get the deepest original error from an error chain
+ * @param error The error to extract the original cause from
+ * @returns The deepest original error or the error itself
+ */
+export function getDeepOriginalError(error: unknown): unknown {
+	if (!error) {
+		return error;
+	}
+
+	let current = error;
+	let depth = 0;
+	const maxDepth = 10; // Prevent infinite recursion
+
+	while (
+		depth < maxDepth &&
+		current instanceof Error &&
+		'originalError' in current &&
+		current.originalError
+	) {
+		current = current.originalError;
+		depth++;
+	}
+
+	return current;
+}
+
+/**
  * Format error for MCP tool response
  */
 export function formatErrorForMcpTool(error: unknown): {
 	content: Array<{ type: 'text'; text: string }>;
+	metadata?: {
+		errorType: ErrorType;
+		statusCode?: number;
+		errorDetails?: unknown;
+	};
 } {
 	const methodLogger = Logger.forContext(
 		'utils/error.util.ts',
@@ -109,6 +141,15 @@ export function formatErrorForMcpTool(error: unknown): {
 	const mcpError = ensureMcpError(error);
 	methodLogger.error(`${mcpError.type} error`, mcpError);
 
+	// Get the deep original error for additional context
+	const originalError = getDeepOriginalError(mcpError.originalError);
+
+	// Safely extract details from the original error
+	const errorDetails =
+		originalError instanceof Error
+			? { message: originalError.message }
+			: originalError;
+
 	return {
 		content: [
 			{
@@ -116,6 +157,11 @@ export function formatErrorForMcpTool(error: unknown): {
 				text: `Error: ${mcpError.message}`,
 			},
 		],
+		metadata: {
+			errorType: mcpError.type,
+			statusCode: mcpError.statusCode,
+			errorDetails,
+		},
 	};
 }
 
@@ -153,7 +199,7 @@ export function formatErrorForMcpResource(
 }
 
 /**
- * Handle error in CLI context
+ * Handle error in CLI context with improved user feedback
  */
 export function handleCliError(error: unknown): never {
 	const methodLogger = Logger.forContext(
@@ -162,6 +208,46 @@ export function handleCliError(error: unknown): never {
 	);
 	const mcpError = ensureMcpError(error);
 	methodLogger.error(`${mcpError.type} error`, mcpError);
+
+	// Get the deep original error for more context
+	const originalError = getDeepOriginalError(mcpError.originalError);
+
+	// Print the error message
 	console.error(`Error: ${mcpError.message}`);
+
+	// Provide helpful context based on error type
+	if (mcpError.type === ErrorType.AUTH_MISSING) {
+		console.error(
+			'\nTip: Make sure to set up your API token in the configuration file or environment variables.',
+		);
+	} else if (mcpError.type === ErrorType.AUTH_INVALID) {
+		console.error(
+			'\nTip: Check that your API token is correct and has not expired.',
+		);
+	} else if (mcpError.type === ErrorType.API_ERROR) {
+		if (mcpError.statusCode === 429) {
+			console.error(
+				'\nTip: You may have exceeded your API rate limits. Try again later or upgrade your API plan.',
+			);
+		}
+
+		// Add ip-api.com specific context if available
+		if (originalError && typeof originalError === 'object') {
+			const origErr = originalError as Record<string, unknown>;
+			if (origErr.status === 'fail' && origErr.message) {
+				console.error(
+					`\nAPI returned failure: ${String(origErr.message)}`,
+				);
+			}
+		}
+	}
+
+	// Display DEBUG tip
+	if (process.env.DEBUG !== 'mcp:*') {
+		console.error(
+			'\nFor more detailed error information, run with DEBUG=mcp:* environment variable.',
+		);
+	}
+
 	process.exit(1);
 }

@@ -71,33 +71,36 @@ async function get(
 		// First check API-level success/failure before Zod validation
 		// This avoids unnecessary validation errors for known API errors
 		if (rawData.status !== 'success') {
+			// Handle specific ip-api.com error responses
+			if (rawData.message) {
+				if (rawData.message.includes('private range')) {
+					throw createApiError(
+						`Private IP addresses are not supported: ${rawData.message}`,
+						400,
+						rawData,
+					);
+				} else if (rawData.message.includes('reserved range')) {
+					throw createApiError(
+						`Reserved IP addresses are not supported: ${rawData.message}`,
+						400,
+						rawData,
+					);
+				}
+			}
 			throw createApiError(
 				`IP API error: ${rawData.message || 'Unknown error'}`,
+				400, // Use 400 for client errors from ip-api.com
+				rawData,
 			);
 		}
 
 		// Now parse with Zod for successful responses
-		try {
-			const validatedData = IPDetailSchema.parse(rawData);
-			methodLogger.debug(
-				`Received and validated successful data from IP API`,
-			);
-			return validatedData;
-		} catch (zodError) {
-			// Throw error on validation failure
-			methodLogger.error('Zod validation failed', zodError);
-			if (zodError instanceof z.ZodError) {
-				throw createApiError(
-					`API response validation failed: ${zodError.errors
-						.map((e) => `${e.path.join('.')}: ${e.message}`)
-						.join(', ')}`,
-					undefined, // No specific HTTP status for validation errors
-					zodError,
-				);
-			}
-			// Rethrow if it's not a ZodError (shouldn't happen here)
-			throw zodError;
-		}
+		// Validate with Zod schema and return
+		const validatedData = IPDetailSchema.parse(rawData);
+		methodLogger.debug(
+			`Received and validated successful data from IP API`,
+		);
+		return validatedData;
 	} catch (error) {
 		methodLogger.error(`Service error fetching IP data`, error);
 
@@ -107,8 +110,8 @@ async function get(
 				`API response validation failed: ${error.errors
 					.map((e) => `${e.path.join('.')}: ${e.message}`)
 					.join(', ')}`,
-				undefined, // No specific HTTP status for validation errors
-				error, // Include the original ZodError
+				500, // Use 500 for validation errors as it's a server-side issue
+				error,
 			);
 		}
 
