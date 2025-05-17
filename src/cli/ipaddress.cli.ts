@@ -22,7 +22,7 @@ function register(program: Command) {
 		)
 		.argument('[ipAddress]', 'IP address to lookup (omit for current IP)')
 		.option(
-			'--include-extended-data',
+			'-e, --include-extended-data',
 			'Include extended data (ASN, host, org). Requires API token.',
 		)
 		.option(
