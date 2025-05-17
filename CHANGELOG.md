@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.6.0...v1.7.0) (2025-05-17)
+
+
+### Features
+
+* improve ip_get_details tool description and CLI usability with short options ([895feeb](https://github.com/aashari/boilerplate-mcp-server/commit/895feeb7ef23252ba32023cde658feaa9fd382d8))
+
 # [1.6.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.5.10...v1.6.0) (2025-05-15)
 
 
