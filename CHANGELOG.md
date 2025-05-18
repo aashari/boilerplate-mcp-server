@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.7.0...v1.8.0) (2025-05-18)
+
+
+### Features
+
+* refactor ControllerResponse to only include content field ([68118c7](https://github.com/aashari/boilerplate-mcp-server/commit/68118c75e4fcbe759140807a8d65e583e85b9535))
+
 # [1.7.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.6.0...v1.7.0) (2025-05-17)
 
 
