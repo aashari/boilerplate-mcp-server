@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.8.0...v1.9.0) (2025-05-18)
+
+
+### Features
+
+* refactor services to use live API tests and remove timeout parameter ([3c483b4](https://github.com/aashari/boilerplate-mcp-server/commit/3c483b4379dfcdf47d29cd94903265393b831187))
+
 # [1.8.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.7.0...v1.8.0) (2025-05-18)
 
 
