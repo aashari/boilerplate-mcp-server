@@ -47,18 +47,18 @@ async function handleGetIpDetails(args: GetIpDetailsToolArgsType) {
 		const { ipAddress, ...controllerOptions } = args;
 
 		// Call the controller with the ipAddress and the options object
-		const message = await ipAddressController.get(
+		const result = await ipAddressController.get(
 			ipAddress,
 			controllerOptions,
 		);
-		methodLogger.debug(`Got the response from the controller`, message);
+		methodLogger.debug(`Got the response from the controller`, result);
 
 		// Format the response for the MCP tool
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content,
 				},
 			],
 		};
