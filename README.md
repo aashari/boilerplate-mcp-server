@@ -1,41 +1,30 @@
 # Boilerplate MCP Server
 
-This project serves as a foundation for developing custom Model Context Protocol (MCP) servers that connect AI assistants to external data sources or APIs. It provides a complete architecture pattern, a working example tool, and development infrastructure ready for extension.
+A foundation for developing custom Model Context Protocol (MCP) servers in TypeScript. Provides a complete layered architecture pattern, working example tools, and developer infrastructure to connect AI assistants with external APIs and data sources.
 
----
-
-# Overview
-
-## What is MCP?
-
-Model Context Protocol (MCP) is an open standard that allows AI systems to securely and contextually connect with external tools and data sources.
-
-This boilerplate implements the MCP specification with a clean, layered architecture that can be extended to build custom MCP servers for any API or data source.
+[![NPM Version](https://img.shields.io/npm/v/@aashari/boilerplate-mcp-server)](https://www.npmjs.com/package/@aashari/boilerplate-mcp-server)
+[![Build Status](https://img.shields.io/github/workflow/status/aashari/boilerplate-mcp-server/CI)](https://github.com/aashari/boilerplate-mcp-server/actions)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 ## Why Use This Boilerplate?
 
-- **Production-Ready Architecture**: Follows the same pattern used in published MCP servers, with clear separation between CLI, tools, controllers, and services.
+- **Production-Ready Architecture**: Follows the same pattern used in published MCP servers, with clean separation between CLI, tools, controllers, and services
+- **Type Safety**: Built with TypeScript for improved developer experience, code quality, and maintainability
+- **Working Example**: Includes fully implemented tools demonstrating the complete pattern from CLI to API integration
+- **Testing Framework**: Ready-to-use testing infrastructure for unit and CLI integration tests, with coverage reporting
+- **Complete Developer Tooling**: Pre-configured ESLint, Prettier, TypeScript, and CI/CD workflows
 
-- **Type Safety**: Built with TypeScript for improved developer experience, code quality, and maintainability.
+## What is MCP?
 
-- **Working Example**: Includes a fully implemented IP lookup tool demonstrating the complete pattern from CLI to API integration.
-
-- **Testing Framework**: Comes with testing infrastructure for both unit and CLI integration tests, including coverage reporting.
-
-- **Development Tooling**: Includes ESLint, Prettier, TypeScript, and other quality tools preconfigured for MCP server development.
-
----
-
-# Getting Started
+Model Context Protocol (MCP) is an open standard for securely connecting AI systems to external tools and data sources. This boilerplate implements the MCP specification with a clean, layered architecture that can be extended to build custom MCP servers for any API or data source.
 
 ## Prerequisites
 
 - **Node.js** (>=18.x): [Download](https://nodejs.org/)
 - **Git**: For version control
 
----
-
-## Step 1: Clone and Install
+## Quick Start
 
 ```bash
 # Clone the repository
@@ -44,143 +33,139 @@ cd boilerplate-mcp-server
 
 # Install dependencies
 npm install
-```
 
----
-
-## Step 2: Run Development Server
-
-Start the server in development mode:
-
-```bash
+# Start development server
 npm run dev:server
-```
 
-This starts the MCP server with hot-reloading and enables the MCP Inspector at http://localhost:5173.
-
----
-
-## Step 3: Test the Example Tool
-
-Run the example IP lookup tool from the CLI:
-
-```bash
-# Using CLI in development mode
-npm run dev:cli -- get-ip-details
-
-# Or with a specific IP
+# Try the example tool
 npm run dev:cli -- get-ip-details 8.8.8.8
 ```
 
----
+## Architecture Overview
 
-# Architecture
-
-This boilerplate follows a clean, layered architecture pattern that separates concerns and promotes maintainability.
-
-## Project Structure
+<details>
+<summary><b>Project Structure (Click to expand)</b></summary>
 
 ```
 src/
 ├── cli/              # Command-line interfaces
+│   ├── index.ts      # CLI entry point
+│   └── *.cli.ts      # Feature-specific CLI modules
 ├── controllers/      # Business logic
+│   └── *.controller.ts  # Feature controllers
 ├── services/         # External API interactions
+│   └── *.service.ts  # Service modules
 ├── tools/            # MCP tool definitions
+│   ├── *.tool.ts     # Tool implementations
+│   └── *.types.ts    # Tool argument schemas
 ├── types/            # Type definitions
+│   └── common.types.ts # Shared type definitions
 ├── utils/            # Shared utilities
-└── index.ts          # Entry point
+│   ├── logger.util.ts  # Structured logging
+│   ├── error.util.ts   # Error handling
+│   └── ...           # Other utility modules
+└── index.ts          # Server entry point
 ```
 
-## Layers and Responsibilities
+</details>
 
-### CLI Layer (`src/cli/*.cli.ts`)
+## Layered Architecture
 
-- **Purpose**: Define command-line interfaces that parse arguments and call controllers
-- **Naming**: Files should be named `<feature>.cli.ts`
-- **Testing**: CLI integration tests in `<feature>.cli.test.ts`
+The boilerplate follows a clean, layered architecture that promotes maintainability and clear separation of concerns:
 
-### Tools Layer (`src/tools/*.tool.ts`)
+### 1. CLI Layer (`src/cli/*.cli.ts`)
 
-- **Purpose**: Define MCP tools with schemas and descriptions for AI assistants
-- **Naming**: Files should be named `<feature>.tool.ts` with types in `<feature>.types.ts`
-- **Pattern**: Each tool should use zod for argument validation
+- **Purpose**: Command-line interfaces that parse arguments and call controllers
+- **Pattern**: Use `commander` for argument parsing, call controllers, handle errors with `handleCliError`
+- **Naming**: `<feature>.cli.ts` 
 
-### Controllers Layer (`src/controllers/*.controller.ts`)
+### 2. Tools Layer (`src/tools/*.tool.ts`)
 
-- **Purpose**: Implement business logic, handle errors, and format responses
-- **Naming**: Files should be named `<feature>.controller.ts`
-- **Pattern**: Should return standardized `ControllerResponse` objects
+- **Purpose**: MCP tool definitions exposed to AI assistants
+- **Pattern**: Use `zod` for schema validation, call controllers, format responses for MCP
+- **Naming**: `<feature>.tool.ts` with types in `<feature>.types.ts`
 
-### Services Layer (`src/services/*.service.ts`)
+### 3. Controllers Layer (`src/controllers/*.controller.ts`)
 
-- **Purpose**: Interact with external APIs or data sources
-- **Naming**: Files should be named `<feature>.service.ts`
-- **Pattern**: Pure API interactions with minimal logic
+- **Purpose**: Business logic orchestration, error handling, response formatting
+- **Pattern**: Return standardized `ControllerResponse` objects, throw errors with context
+- **Naming**: `<feature>.controller.ts` with optional `<feature>.formatter.ts`
 
-### Utils Layer (`src/utils/*.util.ts`)
+### 4. Services Layer (`src/services/*.service.ts`)
 
-- **Purpose**: Provide shared functionality across the application
-- **Key Utils**:
-    - `logger.util.ts`: Structured logging
-    - `error.util.ts`: Error handling and standardization
-    - `formatter.util.ts`: Markdown formatting helpers
+- **Purpose**: External API interactions and data handling
+- **Pattern**: Pure API calls with minimal logic, return raw data
+- **Naming**: `<feature>.service.ts` or `vendor.<vendor>.<feature>.service.ts`
 
----
+### 5. Utils Layer (`src/utils/*.util.ts`)
 
-# Development Guide
+- **Purpose**: Shared functionality across the application
+- **Key Utils**: Logging, error handling, formatting, configuration
 
-## Development Scripts
+## Developer Guide
+
+### Development Scripts
 
 ```bash
-# Start server in development mode (hot-reload & inspector)
+# Start server in dev mode with hot-reload & inspector
 npm run dev:server
 
-# Run CLI in development mode
+# Run CLI commands in development
 npm run dev:cli -- [command] [args]
 
 # Build the project
 npm run build
 
-# Start server in production mode
+# Production server
+npm start
 npm run start:server
 
-# Run CLI in production mode
+# Production CLI
 npm run start:cli -- [command] [args]
+
+# Testing
+npm test                    # Run all tests
+npm test -- src/path/to/test.ts  # Run specific tests
+npm run test:coverage       # Generate coverage report
+
+# Code Quality
+npm run lint                # Run ESLint
+npm run format              # Format with Prettier
+npm run typecheck           # Check TypeScript types
 ```
 
-## Testing
+### Debugging Tools
 
-```bash
-# Run all tests
-npm test
+- **MCP Inspector**: Visual tool for testing your MCP tools
+  - Run server with `npm run dev:server`
+  - Open http://localhost:5173 in your browser
 
-# Run specific tests
-npm test -- src/path/to/test.ts
+- **Server Logs**: Enable with `DEBUG=true npm run dev:server` or in config
 
-# Generate test coverage report
-npm run test:coverage
+<details>
+<summary><b>Configuration (Click to expand)</b></summary>
+
+Create `~/.mcp/configs.json`:
+
+```json
+{
+  "boilerplate": {
+    "environments": {
+      "DEBUG": "true",
+      "ANY_OTHER_CONFIG": "value"
+    }
+  }
+}
 ```
 
-## Code Quality
+</details>
 
-```bash
-# Lint code
-npm run lint
+## Building Custom Tools
 
-# Format code with Prettier
-npm run format
+<details>
+<summary><b>Step-by-Step Tool Implementation Guide (Click to expand)</b></summary>
 
-# Check types
-npm run typecheck
-```
-
----
-
-# Building Custom Tools
-
-Follow these steps to add your own tools to the server:
-
-## 1. Define Service Layer
+### 1. Define Service Layer
 
 Create a new service in `src/services/` to interact with your external API:
 
@@ -197,7 +182,7 @@ export async function getData(param: string): Promise<any> {
 }
 ```
 
-## 2. Create Controller
+### 2. Create Controller
 
 Add a controller in `src/controllers/` to handle business logic:
 
@@ -236,7 +221,7 @@ export async function getData(
 }
 ```
 
-## 3. Implement MCP Tool
+### 3. Implement MCP Tool
 
 Create a tool definition in `src/tools/`:
 
@@ -284,7 +269,7 @@ Use this to fetch example data. Returns formatted data as Markdown.`,
 }
 ```
 
-## 4. Add CLI Support
+### 4. Add CLI Support
 
 Create a CLI command in `src/cli/`:
 
@@ -316,7 +301,7 @@ program
 	});
 ```
 
-## 5. Register Components
+### 5. Register Components
 
 Update the entry points to register your new components:
 
@@ -330,56 +315,39 @@ import exampleTool from './tools/example.tool.js';
 exampleTool.register(server);
 ```
 
----
+</details>
 
-# Debugging Tools
+## Publishing Your MCP Server
 
-## MCP Inspector
+1. Update package.json with your details:
+   ```json
+   {
+     "name": "your-mcp-server-name",
+     "version": "1.0.0",
+     "description": "Your custom MCP server",
+     "author": "Your Name",
+     // Other fields...
+   }
+   ```
 
-Access the visual MCP Inspector to test your tools and view request/response details:
-
-1. Run `npm run dev:server`
-2. Open http://localhost:5173 in your browser
-3. Test your tools and view logs directly in the UI
-
-## Server Logs
-
-Enable debug logs for development:
-
-```bash
-# Set environment variable
-DEBUG=true npm run dev:server
-
-# Or configure in ~/.mcp/configs.json
-```
-
----
-
-# Publishing Your MCP Server
-
-When ready to publish your custom MCP server:
-
-1. Update package.json with your details
 2. Update README.md with your tool documentation
-3. Build the project: `npm run build`
-4. Test the production build: `npm run start:server`
-5. Publish to npm: `npm publish`
+3. Build: `npm run build`
+4. Test: `npm run start:server`
+5. Publish: `npm publish`
 
----
+## Testing Best Practices
 
-# License
+- **Unit Tests**: Test utils and pure functions in isolation
+- **Controller Tests**: Test business logic with mocked service calls
+- **Integration Tests**: Test CLI with real dependencies
+- **Coverage Goal**: Aim for >80% test coverage
+
+## License
 
 [ISC License](https://opensource.org/licenses/ISC)
 
-```json
-{
-	"boilerplate": {
-		"environments": {
-			"DEBUG": "true",
-			"ANY_OTHER_CONFIG": "value"
-		}
-	}
-}
-```
+## Resources
 
-**Note:** For backward compatibility, the server will also recognize configurations under the full package name (`@aashari/boilerplate-mcp-server`) or the unscoped package name (`boilerplate-mcp-server`) if the `boilerplate` key is not found. However, using the short `boilerplate` key is recommended for new configurations.
+- [MCP Specification](https://github.com/modelcontextprotocol/mcp-spec)
+- [Official MCP Documentation](https://www.modelcontextprotocol.ai/)
+- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
