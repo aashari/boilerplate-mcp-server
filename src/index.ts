@@ -10,8 +10,10 @@ import { runCli } from './cli/index.js';
 
 // Import tools
 import ipAddressTools from './tools/ipaddress.tool.js';
+import { registerShopifyTools } from './tools/shopify.tool.js';
 // Import resources
 import ipAddressResources from './resources/ipaddress.resource.js';
+import { getShopifyAccessToken, getShopifyDomain } from './services/shopify.service.js';
 
 /**
  * Boilerplate MCP Server
@@ -57,6 +59,9 @@ export async function startServer(
 	);
 	serverLogger.debug(`Config DEBUG value: ${config.get('DEBUG')}`);
 
+	serverLogger.info(`Shopify domain: ${getShopifyDomain()}`);
+	serverLogger.info(`Shopify access token: ${getShopifyAccessToken()}`);
+
 	serverLogger.info(`Initializing Boilerplate MCP server v${VERSION}`);
 	serverInstance = new McpServer({
 		name: PACKAGE_NAME,
@@ -74,6 +79,8 @@ export async function startServer(
 	serverLogger.info('Registering MCP tools...');
 	ipAddressTools.registerTools(serverInstance);
 	serverLogger.debug('Registered IP address tools');
+	registerShopifyTools(serverInstance);
+	serverLogger.debug('Registered Shopify tools');
 
 	// Register resources
 	serverLogger.info('Registering MCP resources...');
