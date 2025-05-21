@@ -2,8 +2,6 @@ import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import ipAddressController from '../controllers/ipaddress.controller.js';
-// Import the specific type needed for controller options
-import { IpAddressToolArgsType } from '../tools/ipaddress.types.js';
 
 const logger = Logger.forContext('cli/ipaddress.cli.ts');
 
@@ -37,16 +35,14 @@ function register(program: Command) {
 					options,
 				});
 
-				// Map CLI options to the controller options type (IpAddressToolArgsType)
-				const controllerOptions: IpAddressToolArgsType = {
+				// Create a single args object to pass to the controller
+				const args = {
+					ipAddress,
 					includeExtendedData: options.includeExtendedData || false,
 					useHttps: options.useHttps, // commander handles the default via --no-use-https
 				};
 
-				const result = await ipAddressController.get(
-					ipAddress,
-					controllerOptions,
-				);
+				const result = await ipAddressController.get(args);
 				console.log(result.content);
 			} catch (error) {
 				handleCliError(error);

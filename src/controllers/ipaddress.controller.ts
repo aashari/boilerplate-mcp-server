@@ -3,7 +3,6 @@ import ipApiService from '../services/vendor.ip-api.com.service.js';
 import { formatIpDetails } from './ipaddress.formatter.js';
 import { handleControllerError } from '../utils/error-handler.util.js';
 import { ControllerResponse } from '../types/common.types.js';
-import { IpAddressToolArgsType } from '../tools/ipaddress.types.js';
 import { config } from '../utils/config.util.js';
 import { McpError } from '../utils/error.util.js';
 import { buildErrorContext } from '../utils/error-handler.util.js';
@@ -20,24 +19,26 @@ import { buildErrorContext } from '../utils/error-handler.util.js';
  * @description Fetches details for a specific IP address or the current device's IP.
  *              Handles mapping controller options (like includeExtendedData) to service parameters (fields).
  * @memberof IpAddressController
- * @param {string} [ipAddress] - Optional IP address to look up. If omitted, the service will fetch the current device's public IP.
- * @param {IpAddressToolArgsType} [options={}] - Optional configuration for the request, such as `includeExtendedData` and `useHttps`.
+ * @param {Object} args - Arguments containing ipAddress and options
+ * @param {string} [args.ipAddress] - Optional IP address to look up. If omitted, the service will fetch the current device's public IP.
+ * @param {boolean} [args.includeExtendedData=false] - Whether to include extended data fields requiring an API token
+ * @param {boolean} [args.useHttps=true] - Whether to use HTTPS for the API request
  * @returns {Promise<ControllerResponse>} A promise that resolves to the standard controller response containing the formatted IP details in Markdown.
  * @throws {McpError} Throws an McpError (handled by `handleControllerError`) if the service call fails or returns an error.
  */
 async function get(
-	ipAddress?: string,
-	options: IpAddressToolArgsType = {
-		includeExtendedData: false,
-		useHttps: true,
-	},
+	args: {
+		ipAddress?: string;
+		includeExtendedData?: boolean;
+		useHttps?: boolean;
+	} = {},
 ): Promise<ControllerResponse> {
 	const methodLogger = Logger.forContext(
 		'controllers/ipaddress.controller.ts',
 		'get',
 	);
 	methodLogger.debug(
-		`Getting IP address details for ${ipAddress || 'current device'}...`,
+		`Getting IP address details for ${args.ipAddress || 'current device'}...`,
 	);
 
 	try {
@@ -46,43 +47,46 @@ async function get(
 			process.env.NODE_ENV === 'test' ||
 			process.env.JEST_WORKER_ID !== undefined;
 
-		// Make a copy of options to avoid modifying the original
-		const safeOptions = { ...options };
+		// Apply defaults
+		const options = {
+			includeExtendedData: args.includeExtendedData ?? false,
+			useHttps: args.useHttps ?? true,
+		};
 
 		// Special handling for test environments
 		if (isTestEnvironment) {
 			methodLogger.debug('Running in test environment');
 			// Force these settings for consistent test behavior
-			safeOptions.includeExtendedData = false;
-			safeOptions.useHttps = false;
+			options.includeExtendedData = false;
+			options.useHttps = false;
 		}
 		// For non-test environments, check API token
 		else {
 			const hasApiToken = Boolean(config.get('IPAPI_API_TOKEN'));
-			if (safeOptions.includeExtendedData && !hasApiToken) {
+			if (options.includeExtendedData && !hasApiToken) {
 				methodLogger.warn(
 					'Extended data requested but no API token found. Falling back to basic data.',
 				);
-				safeOptions.includeExtendedData = false;
+				options.includeExtendedData = false;
 			}
 		}
 
 		// Service options
 		const serviceOptions = {
-			useHttps: safeOptions.useHttps,
+			useHttps: options.useHttps,
 			// Map includeExtendedData to the 'fields' expected by the service
 			// Only send fields parameter if explicitly requesting extended data
-			fields: safeOptions.includeExtendedData
+			fields: options.includeExtendedData
 				? getAllIpApiFields()
 				: undefined,
 		};
 
 		methodLogger.debug(
-			`Getting IP details for ${ipAddress || 'current IP'}`,
+			`Getting IP details for ${args.ipAddress || 'current IP'}`,
 			{
-				ipAddress,
-				originalOptions: options,
-				safeOptions,
+				ipAddress: args.ipAddress,
+				originalOptions: args,
+				options,
 				serviceOptions,
 				isTestEnvironment,
 			},
@@ -90,7 +94,7 @@ async function get(
 
 		try {
 			// Call the service with ipAddress and the mapped serviceOptions
-			const data = await ipApiService.get(ipAddress, serviceOptions);
+			const data = await ipApiService.get(args.ipAddress, serviceOptions);
 			methodLogger.debug(`Got the response from the service`, data);
 			const formattedContent = formatIpDetails(data);
 			return { content: formattedContent };
@@ -105,7 +109,7 @@ async function get(
 			) {
 				methodLogger.warn('HTTPS request failed, falling back to HTTP');
 				// Try again with HTTP
-				const httpData = await ipApiService.get(ipAddress, {
+				const httpData = await ipApiService.get(args.ipAddress, {
 					...serviceOptions,
 					useHttps: false,
 				});
@@ -128,8 +132,8 @@ async function get(
 				'IP Address',
 				'get',
 				'controllers/ipaddress.controller.ts@get',
-				ipAddress || 'current device',
-				{ options },
+				args.ipAddress || 'current device',
+				{ args },
 			),
 		);
 	}

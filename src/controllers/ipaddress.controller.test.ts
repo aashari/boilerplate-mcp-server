@@ -5,7 +5,7 @@ describe('IP Address Controller', () => {
 	describe('get: current IP address', () => {
 		it('should return a valid IP address', async () => {
 			// Call the function with the real API
-			const result = await ipAddressController.get();
+			const result = await ipAddressController.get({});
 
 			// Verify the result is a valid IP address format with our new structure
 			expect(result.content).toContain('# IP Address Details:');
@@ -21,7 +21,7 @@ describe('IP Address Controller', () => {
 			const ipAddress = '8.8.8.8'; // Google's public DNS
 
 			// Call the function with the real API
-			const result = await ipAddressController.get(ipAddress);
+			const result = await ipAddressController.get({ ipAddress });
 
 			// Verify the response contains expected fields in our new structure
 			expect(result.content).toContain('# IP Address Details: 8.8.8.8');
@@ -36,13 +36,13 @@ describe('IP Address Controller', () => {
 			const invalidIp = 'invalid-ip';
 
 			// Call the function with the real API and expect it to throw an McpError
-			await expect(ipAddressController.get(invalidIp)).rejects.toThrow(
-				McpError,
-			);
+			await expect(
+				ipAddressController.get({ ipAddress: invalidIp }),
+			).rejects.toThrow(McpError);
 
 			// Try to get the error to verify its properties
 			try {
-				await ipAddressController.get(invalidIp);
+				await ipAddressController.get({ ipAddress: invalidIp });
 			} catch (error) {
 				// Verify the error is an McpError with the correct type
 				expect(error).toBeInstanceOf(McpError);

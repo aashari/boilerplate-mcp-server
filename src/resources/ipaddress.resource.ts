@@ -31,13 +31,11 @@ function registerResources(server: McpServer) {
 				const ipAddress = uri.toString().replace(/^ip:\/\//, '');
 
 				// Call the controller to get the IP details
-				const result = await ipaddressController.get(
-					ipAddress || undefined,
-					{
-						includeExtendedData: false,
-						useHttps: true,
-					},
-				);
+				const result = await ipaddressController.get({
+					ipAddress: ipAddress || undefined,
+					includeExtendedData: false,
+					useHttps: true,
+				});
 
 				// Return the content as a text resource
 				return {
