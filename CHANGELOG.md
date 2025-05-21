@@ -1,3 +1,11 @@
+## [1.10.3](https://github.com/aashari/boilerplate-mcp-server/compare/v1.10.2...v1.10.3) (2025-05-21)
+
+
+### Bug Fixes
+
+* Refactor IP address controller to accept args as a single object ([acb7ea2](https://github.com/aashari/boilerplate-mcp-server/commit/acb7ea2a148e9673a4bf2aa703f8ca988dc05c93))
+* update dependencies ([02c42fa](https://github.com/aashari/boilerplate-mcp-server/commit/02c42fa6ef66be461444d1780b013860b455cbff))
+
 ## [1.10.2](https://github.com/aashari/boilerplate-mcp-server/compare/v1.10.1...v1.10.2) (2025-05-21)
 
 
