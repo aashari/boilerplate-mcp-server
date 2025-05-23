@@ -9,16 +9,16 @@
  * Current application version
  * This should match the version in package.json
  */
-export const VERSION = '1.5.4';
+export const VERSION = '0.1.0';
 
 /**
  * Package name with scope
  * Used for initialization and identification
  */
-export const PACKAGE_NAME = '@aashari/boilerplate-mcp-server';
+export const PACKAGE_NAME = '@suryarajendran/shopify-mcp-server';
 
 /**
  * CLI command name
  * Used for binary name and CLI help text
  */
-export const CLI_NAME = 'mcp-boilerplate';
+export const CLI_NAME = 'shopify-mcp';

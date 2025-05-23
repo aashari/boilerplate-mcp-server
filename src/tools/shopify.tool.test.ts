@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals';
-import * as shopifyController from '../controllers/shopify.controller.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerShopifyTools } from './shopify.tool.js';
 import { config } from '../utils/config.util.js';
