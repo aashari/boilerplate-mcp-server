@@ -15,8 +15,8 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"prepare": "npm run build && chmod +x dist/index.js",
-		"postinstall": "chmod +x dist/index.js || true",
+		"prepare": "npm run build && node scripts/ensure-executable.js",
+		"postinstall": "node scripts/ensure-executable.js",
 		"test": "jest",
 		"test:coverage": "jest --coverage",
 		"lint": "eslint src --ext .ts --config eslint.config.mjs",
