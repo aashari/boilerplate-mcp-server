@@ -1,3 +1,10 @@
+## [1.10.5](https://github.com/aashari/boilerplate-mcp-server/compare/v1.10.4...v1.10.5) (2025-06-02)
+
+
+### Bug Fixes
+
+* replace Unix-specific chmod with cross-platform ensure-executable script ([6733798](https://github.com/aashari/boilerplate-mcp-server/commit/6733798669eead4766627193d5ef9f1f0cf1582a))
+
 ## [1.10.4](https://github.com/aashari/boilerplate-mcp-server/compare/v1.10.3...v1.10.4) (2025-06-02)
 
 
