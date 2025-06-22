@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.0...v1.11.1) (2025-06-22)
+
+
+### Bug Fixes
+
+* update dependencies ([fcd9de0](https://github.com/aashari/boilerplate-mcp-server/commit/fcd9de082f648db2bb6e74a04e91c0595f1bb28a))
+
 # [1.11.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.10.5...v1.11.0) (2025-06-22)
 
 
