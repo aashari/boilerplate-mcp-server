@@ -1,10 +1,9 @@
 {
 	"name": "@aashari/boilerplate-mcp-server",
 	"version": "1.10.5",
-	"description": "TypeScript Model Context Protocol (MCP) server boilerplate providing IP lookup tools/resources. Includes CLI support and extensible structure for connecting AI systems (LLMs) to external data sources like ip-api.com. Ideal template for creating new MCP integrations via Node.js.",
+	"description": "TypeScript MCP server boilerplate with STDIO and HTTP transport support, CLI tools, and extensible architecture",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
-	"_moduleNotes": "Although source code uses ESM syntax, the build output target is CommonJS to align with Node.js compatibility and patterns seen in related MCP servers. tsconfig.json's 'module': 'NodeNext' handles the input syntax, while tsc outputs CJS.",
 	"type": "commonjs",
 	"repository": {
 		"type": "git",
@@ -17,41 +16,39 @@
 		"build": "tsc",
 		"prepare": "npm run build && node scripts/ensure-executable.js",
 		"postinstall": "node scripts/ensure-executable.js",
+		"clean": "rm -rf dist coverage",
 		"test": "jest",
 		"test:coverage": "jest --coverage",
 		"lint": "eslint src --ext .ts --config eslint.config.mjs",
 		"format": "prettier --write 'src/**/*.ts' 'scripts/**/*.js'",
-		"publish:npm": "npm publish",
-		"update:check": "npx npm-check-updates",
-		"update:deps": "npx npm-check-updates -u && npm install --legacy-peer-deps",
-		"update:version": "node scripts/update-version.js",
-		"dev:server": "DEBUG=true npm run build && npx @modelcontextprotocol/inspector -e DEBUG=true node dist/index.js",
-		"dev:cli": "DEBUG=true npm run build && DEBUG=true node dist/index.js",
-		"start:server": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js",
-		"start:cli": "npm run build && node dist/index.js"
+		"cli": "npm run build && node dist/index.js",
+		"mcp:stdio": "TRANSPORT_MODE=stdio npm run build && node dist/index.js",
+		"mcp:http": "TRANSPORT_MODE=http npm run build && node dist/index.js",
+		"mcp:inspect": "TRANSPORT_MODE=http npm run build && (node dist/index.js &) && sleep 2 && npx @modelcontextprotocol/inspector http://localhost:3000/mcp",
+		"dev:stdio": "npm run build && npx @modelcontextprotocol/inspector -e TRANSPORT_MODE=stdio -e DEBUG=true node dist/index.js",
+		"dev:http": "DEBUG=true TRANSPORT_MODE=http npm run build && node dist/index.js"
 	},
 	"keywords": [
 		"mcp",
+		"model-context-protocol",
 		"typescript",
 		"claude",
 		"anthropic",
 		"ai",
+		"llm",
 		"boilerplate",
 		"server",
-		"model-context-protocol",
-		"tools",
-		"resources",
-		"tooling",
-		"ai-integration",
-		"mcp-server",
-		"llm",
-		"ai-connector",
-		"external-tools",
+		"stdio",
+		"http",
+		"streamable",
 		"cli",
-		"mcp-inspector"
+		"mcp-server"
 	],
-	"author": "",
+	"author": "Andi Ashari",
 	"license": "ISC",
+	"engines": {
+		"node": ">=18.0.0"
+	},
 	"devDependencies": {
 		"@eslint/js": "^9.29.0",
 		"@semantic-release/changelog": "^6.0.3",
@@ -59,6 +56,8 @@
 		"@semantic-release/git": "^10.0.1",
 		"@semantic-release/github": "^11.0.3",
 		"@semantic-release/npm": "^12.0.1",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.3",
 		"@types/jest": "^30.0.0",
 		"@types/node": "^24.0.3",
 		"@typescript-eslint/eslint-plugin": "^8.34.1",
@@ -67,27 +66,23 @@
 		"eslint-config-prettier": "^10.1.5",
 		"eslint-plugin-prettier": "^5.5.0",
 		"jest": "^30.0.2",
-		"nodemon": "^3.1.10",
-		"npm-check-updates": "^18.0.1",
 		"prettier": "^3.5.3",
 		"semantic-release": "^24.2.5",
 		"ts-jest": "^29.4.0",
-		"ts-node": "^10.9.2",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.34.1"
-	},
-	"publishConfig": {
-		"registry": "https://registry.npmjs.org/",
-		"access": "public"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.13.0",
 		"commander": "^14.0.0",
+		"cors": "^2.8.5",
 		"dotenv": "^16.5.0",
+		"express": "^5.1.0",
 		"zod": "^3.25.67"
 	},
-	"directories": {
-		"example": "examples"
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org/",
+		"access": "public"
 	},
 	"jest": {
 		"preset": "ts-jest",
@@ -97,18 +92,7 @@
 		],
 		"collectCoverageFrom": [
 			"src/**/*.ts",
-			"!src/**/*.test.ts",
-			"!src/**/*.spec.ts"
-		],
-		"coveragePathIgnorePatterns": [
-			"/node_modules/",
-			"/dist/",
-			"/coverage/"
-		],
-		"coverageReporters": [
-			"text",
-			"lcov",
-			"json-summary"
+			"!src/**/*.test.ts"
 		],
 		"transform": {
 			"^.+\\.tsx?$": [
@@ -123,14 +107,6 @@
 		},
 		"extensionsToTreatAsEsm": [
 			".ts"
-		],
-		"moduleFileExtensions": [
-			"ts",
-			"tsx",
-			"js",
-			"jsx",
-			"json",
-			"node"
 		]
 	}
 }

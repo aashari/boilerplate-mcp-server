@@ -7,13 +7,14 @@ A foundation for developing custom Model Context Protocol (MCP) servers in TypeS
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
-## Why Use This Boilerplate?
+## Features
 
-- **Production-Ready Architecture**: Follows the same pattern used in published MCP servers, with clean separation between CLI, tools, controllers, and services
-- **Type Safety**: Built with TypeScript for improved developer experience, code quality, and maintainability
-- **Working Example**: Includes fully implemented tools demonstrating the complete pattern from CLI to API integration
-- **Testing Framework**: Ready-to-use testing infrastructure for unit and CLI integration tests, with coverage reporting
-- **Complete Developer Tooling**: Pre-configured ESLint, Prettier, TypeScript, and CI/CD workflows
+- **Multiple Transport Support**: STDIO and Streamable HTTP transports
+- **Production-Ready Architecture**: Clean separation between CLI, tools, controllers, and services
+- **Type Safety**: Built with TypeScript for improved developer experience
+- **Working Example**: Fully implemented IP address lookup tools
+- **Testing Framework**: Ready-to-use testing infrastructure with coverage reporting
+- **Complete Developer Tooling**: Pre-configured ESLint, Prettier, TypeScript
 
 ## What is MCP?
 
@@ -34,12 +35,35 @@ cd boilerplate-mcp-server
 # Install dependencies
 npm install
 
-# Start development server
-npm run dev:server
+# Run in different modes:
 
-# Try the example tool
-npm run dev:cli -- get-ip-details 8.8.8.8
+# 1. CLI Mode - Execute commands directly
+npm run cli -- get-ip-details 8.8.8.8
+
+# 2. STDIO Transport - For direct AI assistant integration
+npm run mcp:stdio
+
+# 3. HTTP Transport - For web-based integrations (default)
+npm run mcp:http
+
+# 4. Development with MCP Inspector
+npm run mcp:inspect
 ```
+
+## Transport Modes
+
+### STDIO Transport
+- Traditional subprocess communication via stdin/stdout
+- Ideal for local AI assistant integrations
+- Run with: `TRANSPORT_MODE=stdio npm run build && node dist/index.js`
+
+### Streamable HTTP Transport (Default)
+- Modern HTTP-based transport with Server-Sent Events (SSE)
+- Supports multiple concurrent connections
+- Runs on port 3000 by default (configurable via PORT env var)
+- Endpoint: `http://localhost:3000/mcp`
+- Health check: `http://localhost:3000/`
+- Run with: `TRANSPORT_MODE=http npm run build && node dist/index.js`
 
 ## Architecture Overview
 
@@ -58,6 +82,8 @@ src/
 ├── tools/            # MCP tool definitions
 │   ├── *.tool.ts     # Tool implementations
 │   └── *.types.ts    # Tool argument schemas
+├── resources/        # MCP resource definitions
+│   └── *.resource.ts # Resource implementations
 ├── types/            # Type definitions
 │   └── common.types.ts # Shared type definitions
 ├── utils/            # Shared utilities
@@ -107,40 +133,44 @@ The boilerplate follows a clean, layered architecture that promotes maintainabil
 ### Development Scripts
 
 ```bash
-# Start server in dev mode with hot-reload & inspector
-npm run dev:server
+# Development
+npm run build               # Build TypeScript
+npm run clean               # Clean build artifacts
 
-# Run CLI commands in development
-npm run dev:cli -- [command] [args]
+# Running different modes
+npm run cli -- [command]    # Run CLI commands
+npm run mcp:stdio          # Run with STDIO transport
+npm run mcp:http           # Run with HTTP transport (default)
+npm run mcp:inspect        # Run with MCP Inspector
 
-# Build the project
-npm run build
-
-# Production server
-npm start
-npm run start:server
-
-# Production CLI
-npm run start:cli -- [command] [args]
+# Development modes
+npm run dev:stdio          # STDIO with inspector
+npm run dev:http           # HTTP in development mode
 
 # Testing
 npm test                    # Run all tests
-npm test -- src/path/to/test.ts  # Run specific tests
 npm run test:coverage       # Generate coverage report
 
 # Code Quality
 npm run lint                # Run ESLint
 npm run format              # Format with Prettier
-npm run typecheck           # Check TypeScript types
 ```
+
+### Environment Variables
+
+- `TRANSPORT_MODE`: Set to `stdio` or `http` (default: `http`)
+- `PORT`: HTTP server port (default: `3000`)
+- `DEBUG`: Enable debug logging (default: `false`)
+- `IPAPI_API_TOKEN`: API token for ip-api.com (optional)
 
 ### Debugging Tools
 
 - **MCP Inspector**: Visual tool for testing your MCP tools
-  - Run server with `npm run dev:server`
-  - Open http://localhost:5173 in your browser
+  - Run server with `npm run mcp:inspect`
+  - Open the URL shown in terminal
+  - Test your tools interactively
 
-- **Server Logs**: Enable with `DEBUG=true npm run dev:server` or in config
+- **Debug Logging**: Enable with `DEBUG=true` environment variable
 
 <details>
 <summary><b>Configuration (Click to expand)</b></summary>
@@ -152,7 +182,8 @@ Create `~/.mcp/configs.json`:
   "boilerplate": {
     "environments": {
       "DEBUG": "true",
-      "ANY_OTHER_CONFIG": "value"
+      "TRANSPORT_MODE": "http",
+      "PORT": "3000"
     }
   }
 }
@@ -332,7 +363,7 @@ exampleTool.register(server);
 
 2. Update README.md with your tool documentation
 3. Build: `npm run build`
-4. Test: `npm run start:server`
+4. Test: `npm run mcp:stdio` and `npm run mcp:http`
 5. Publish: `npm publish`
 
 ## Testing Best Practices
