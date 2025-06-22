@@ -1,3 +1,10 @@
+## [1.11.2](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.1...v1.11.2) (2025-06-22)
+
+
+### Bug Fixes
+
+* change default transport from HTTP to STDIO for proper MCP client integration ([05027b8](https://github.com/aashari/boilerplate-mcp-server/commit/05027b8320ea52926527b030a085fc2f754149eb))
+
 ## [1.11.1](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.0...v1.11.1) (2025-06-22)
 
 
