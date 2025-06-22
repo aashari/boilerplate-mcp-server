@@ -20,6 +20,7 @@
 		"test": "jest",
 		"test:coverage": "jest --coverage",
 		"lint": "eslint src --ext .ts --config eslint.config.mjs",
+		"update:deps": "npx npm-check-updates -u && npm install --legacy-peer-deps",
 		"format": "prettier --write 'src/**/*.ts' 'scripts/**/*.js'",
 		"cli": "npm run build && node dist/index.js",
 		"mcp:stdio": "TRANSPORT_MODE=stdio npm run build && node dist/index.js",
