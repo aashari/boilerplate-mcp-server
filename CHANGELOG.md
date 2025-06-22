@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.10.5...v1.11.0) (2025-06-22)
+
+
+### Features
+
+* add Streamable HTTP transport support alongside STDIO ([aa04e01](https://github.com/aashari/boilerplate-mcp-server/commit/aa04e011b2f80ced3de024050e36ef09d3ed7b18))
+
 ## [1.10.5](https://github.com/aashari/boilerplate-mcp-server/compare/v1.10.4...v1.10.5) (2025-06-02)
 
 
