@@ -26,7 +26,7 @@ let transportInstance:
  * Start the MCP server with the specified transport mode
  */
 export async function startServer(
-	mode: 'stdio' | 'http' = 'http',
+	mode: 'stdio' | 'http' = 'stdio',
 ): Promise<McpServer> {
 	const serverLogger = Logger.forContext('index.ts', 'startServer');
 
@@ -141,7 +141,7 @@ async function main() {
 	}
 
 	// Server mode - determine transport
-	const transportMode = (process.env.TRANSPORT_MODE || 'http').toLowerCase();
+	const transportMode = (process.env.TRANSPORT_MODE || 'stdio').toLowerCase();
 	let mode: 'http' | 'stdio';
 
 	if (transportMode === 'stdio') {
@@ -150,9 +150,9 @@ async function main() {
 		mode = 'http';
 	} else {
 		mainLogger.warn(
-			`Unknown TRANSPORT_MODE "${transportMode}", defaulting to http`,
+			`Unknown TRANSPORT_MODE "${transportMode}", defaulting to stdio`,
 		);
-		mode = 'http';
+		mode = 'stdio';
 	}
 
 	mainLogger.info(`Starting server with ${mode.toUpperCase()} transport`);
