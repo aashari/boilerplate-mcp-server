@@ -23,11 +23,11 @@
 		"update:deps": "npx npm-check-updates -u && npm install --legacy-peer-deps",
 		"format": "prettier --write 'src/**/*.ts' 'scripts/**/*.js'",
 		"cli": "npm run build && node dist/index.js",
-		"mcp:stdio": "TRANSPORT_MODE=stdio npm run build && node dist/index.js",
-		"mcp:http": "TRANSPORT_MODE=http npm run build && node dist/index.js",
-		"mcp:inspect": "TRANSPORT_MODE=http npm run build && (node dist/index.js &) && sleep 2 && npx @modelcontextprotocol/inspector http://localhost:3000/mcp",
+		"mcp:stdio": "npm run build && TRANSPORT_MODE=stdio node dist/index.js",
+		"mcp:http": "npm run build && TRANSPORT_MODE=http node dist/index.js",
+		"mcp:inspect": "npm run build && (TRANSPORT_MODE=http node dist/index.js &) && sleep 2 && npx @modelcontextprotocol/inspector http://localhost:3000/mcp",
 		"dev:stdio": "npm run build && npx @modelcontextprotocol/inspector -e TRANSPORT_MODE=stdio -e DEBUG=true node dist/index.js",
-		"dev:http": "DEBUG=true TRANSPORT_MODE=http npm run build && node dist/index.js"
+		"dev:http": "npm run build && DEBUG=true TRANSPORT_MODE=http node dist/index.js"
 	},
 	"keywords": [
 		"mcp",
