@@ -79,7 +79,7 @@
 		"cors": "^2.8.5",
 		"dotenv": "^17.0.0",
 		"express": "^5.1.0",
-		"zod": "^3.25.67"
+		"zod": "^4.0.5"
 	},
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/",
