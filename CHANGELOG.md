@@ -1,3 +1,10 @@
+## [1.13.5](https://github.com/aashari/boilerplate-mcp-server/compare/v1.13.4...v1.13.5) (2025-08-02)
+
+
+### Bug Fixes
+
+* allow Gemini to run even if build fails to catch PR issues ([c7b31b3](https://github.com/aashari/boilerplate-mcp-server/commit/c7b31b33674b4ef458d6d201aa22673f13a5247a))
+
 ## [1.13.4](https://github.com/aashari/boilerplate-mcp-server/compare/v1.13.3...v1.13.4) (2025-08-02)
 
 
