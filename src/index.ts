@@ -28,6 +28,7 @@ let transportInstance:
 export async function startServer(
 	mode: 'stdio' | 'http' = 'stdio',
 ): Promise<McpServer> {
+	logger.info(`Starting MCP server in ${mode} mode with ${PACKAGE_NAME} v${VERSION}`);
 	const serverLogger = Logger.forContext('index.ts', 'startServer');
 
 	// Load configuration
