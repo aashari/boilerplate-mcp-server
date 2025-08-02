@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.4...v1.12.0) (2025-08-02)
+
+
+### Features
+
+* add startup logging with package name and version ([cb09d0f](https://github.com/aashari/boilerplate-mcp-server/commit/cb09d0f1fa7ffc252f7c4370553f448e7fbfc44e))
+
 ## [1.11.4](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.3...v1.11.4) (2025-08-02)
 
 
