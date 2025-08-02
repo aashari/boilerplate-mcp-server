@@ -1,3 +1,10 @@
+## [1.13.4](https://github.com/aashari/boilerplate-mcp-server/compare/v1.13.3...v1.13.4) (2025-08-02)
+
+
+### Bug Fixes
+
+* remove debug logging from Gemini workflow ([6f176fe](https://github.com/aashari/boilerplate-mcp-server/commit/6f176feef9a047d3a1fda99983cf1fafb01e93ad))
+
 ## [1.13.3](https://github.com/aashari/boilerplate-mcp-server/compare/v1.13.2...v1.13.3) (2025-08-02)
 
 
