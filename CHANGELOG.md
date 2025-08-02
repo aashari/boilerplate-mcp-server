@@ -1,3 +1,11 @@
+## [1.11.3](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.2...v1.11.3) (2025-08-02)
+
+
+### Bug Fixes
+
+* resolve TypeScript compilation errors and improve compatibility ([873c3f6](https://github.com/aashari/boilerplate-mcp-server/commit/873c3f63c4ec384ffa13adf94b54f6b6bb4fdbdc))
+* resolve TypeScript/ESLint version conflict and linting issues ([fa0486a](https://github.com/aashari/boilerplate-mcp-server/commit/fa0486adb67fa449fa038937fb56521f877d4ad4))
+
 ## [1.11.2](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.1...v1.11.2) (2025-06-22)
 
 
