@@ -1,3 +1,10 @@
+## [1.11.4](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.3...v1.11.4) (2025-08-02)
+
+
+### Bug Fixes
+
+* revert zod to v3.25.67 for consistency across MCP projects ([6d6ed1c](https://github.com/aashari/boilerplate-mcp-server/commit/6d6ed1ccdac15eb8595fffd4eb14162a998e183c))
+
 ## [1.11.3](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.2...v1.11.3) (2025-08-02)
 
 
