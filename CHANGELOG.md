@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/aashari/boilerplate-mcp-server/compare/v1.13.0...v1.13.1) (2025-08-02)
+
+
+### Bug Fixes
+
+* pass GEMINI_API_KEY to gemini CLI command ([a9dd9d7](https://github.com/aashari/boilerplate-mcp-server/commit/a9dd9d7300e6a9171e52dd11eba551c60ec95c04))
+
 # [1.13.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.12.0...v1.13.0) (2025-08-02)
 
 
