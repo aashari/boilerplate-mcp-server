@@ -1,3 +1,15 @@
+# [1.13.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.12.0...v1.13.0) (2025-08-02)
+
+
+### Bug Fixes
+
+* apply prettier formatting to index.ts ([b416d81](https://github.com/aashari/boilerplate-mcp-server/commit/b416d81f62e307371615b382aa997d52cd8903b8))
+
+
+### Features
+
+* implement Gemini CLI autonomous MCP engineer ([cb632bd](https://github.com/aashari/boilerplate-mcp-server/commit/cb632bd8be5ce84425743da6250c4b45816c76be))
+
 # [1.12.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.11.4...v1.12.0) (2025-08-02)
 
 
