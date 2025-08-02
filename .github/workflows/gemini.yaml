@@ -155,5 +155,4 @@ jobs:
           Now analyze the event and take appropriate MCP engineering action."
 
           echo "Executing Gemini CLI..."
-          echo "GEMINI_API_KEY is ${#GEMINI_API_KEY} characters long"
           gemini -y -m gemini-2.5-flash -p "$PROMPT"
