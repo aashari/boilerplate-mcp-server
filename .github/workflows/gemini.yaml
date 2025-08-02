@@ -153,4 +153,4 @@ jobs:
           Now analyze the event and take appropriate MCP engineering action."
 
           echo "Executing Gemini CLI..."
-          gemini -y -m gemini-2.5-flash -p "$PROMPT"
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} gemini -y -m gemini-2.5-flash -p "$PROMPT"
