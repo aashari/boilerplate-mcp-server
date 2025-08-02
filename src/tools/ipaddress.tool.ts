@@ -32,7 +32,7 @@ const GetIpDetailsToolSchema = z.object({
  * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} Formatted response for the MCP.
  * @throws {McpError} Formatted error if the controller or service layer encounters an issue.
  */
-async function handleGetIpDetails(args: { [key: string]: any }) {
+async function handleGetIpDetails(args: Record<string, unknown>) {
 	const methodLogger = Logger.forContext(
 		'tools/ipaddress.tool.ts',
 		'handleGetIpDetails',

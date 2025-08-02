@@ -108,7 +108,7 @@ async function get(
 		if (error instanceof z.ZodError) {
 			throw createApiError(
 				`API response validation failed: ${error.issues
-					.map((e: any) => `${e.path.join('.')}: ${e.message}`)
+					.map((e: z.ZodIssue) => `${e.path.join('.')}: ${e.message}`)
 					.join(', ')}`,
 				500, // Use 500 for validation errors as it's a server-side issue
 				error,
