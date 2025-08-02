@@ -1,0 +1,156 @@
+name: 'Gemini CLI - Autonomous MCP Engineer'
+
+on:
+  issues:
+    types: [opened, reopened]
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  gemini:
+    runs-on: ubuntu-latest
+    # Skip if the event was triggered by Gemini itself
+    if: |
+      github.actor != 'github-actions[bot]' &&
+      github.actor != 'gemini-bot' &&
+      github.actor != 'Gemini' &&
+      !contains(github.actor, '[bot]')
+
+    # Grant all permissions to the GITHUB_TOKEN
+    permissions: write-all
+
+    env:
+      # GitHub tokens
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # MCP Server specific
+      TRANSPORT_MODE: http
+      PORT: 3000
+      DEBUG: true
+      IPAPI_API_TOKEN: ${{ secrets.IPAPI_API_TOKEN }}
+      # Common environment variables
+      NODE_ENV: development
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          echo "Installing project dependencies..."
+          npm install
+
+      - name: Install Gemini CLI
+        run: |
+          echo "Installing Gemini CLI globally..."
+          npm install -g @google/gemini-cli
+
+      - name: Setup Git Configuration
+        run: |
+          git config --global user.name "Gemini"
+          git config --global user.email "gemini@ashari.tech"
+
+      - name: Setup GitHub CLI
+        run: |
+          echo "GitHub CLI is pre-installed in GitHub Actions"
+          gh --version
+
+      - name: Build Project
+        run: |
+          echo "Building MCP server..."
+          npm run build
+
+      - name: Prepare Repository Context
+        run: |
+          echo "Repository prepared. Gemini CLI will handle MCP engineering autonomously."
+          echo "Current branch: $(git branch --show-current)"
+          echo "Project type: TypeScript MCP Server"
+          echo "Available npm scripts:"
+          npm run | head -10
+
+      - name: Execute Gemini CLI
+        run: |
+          # Create the GitHub event JSON
+          EVENT_JSON=$(cat << 'EOF'
+          ${{ toJSON(github.event) }}
+          EOF
+          )
+
+          # Create prompt for Gemini
+          PROMPT="You are an AUTONOMOUS SENIOR MCP ENGINEER with complete authority over this TypeScript MCP server codebase.
+
+          EVENT: ${{ github.event_name }} (${{ github.event.action }})
+          REPOSITORY: ${{ github.repository }}
+          
+          FULL EVENT DATA:
+          $EVENT_JSON
+
+          YOUR AUTHORITY:
+          - Complete autonomy to analyze, decide, implement, test, deploy
+          - Full access to gh CLI, git, npm, file system
+          - Authority to create/modify/delete any code or configuration
+          - Responsibility for maintaining MCP server quality and TypeScript standards
+          - Read GEMINI.md for detailed project context and guidelines
+
+          PROJECT CONTEXT:
+          - TypeScript MCP Server boilerplate with STDIO and HTTP transport support
+          - Uses @modelcontextprotocol/sdk for MCP implementation
+          - Layered architecture: CLI → Tools → Controllers → Services → Utils
+          - Testing with Jest, linting with ESLint, formatting with Prettier
+          - Semantic release with conventional commits
+          - Current example: IP address lookup tools
+
+          DECISION FRAMEWORK:
+          1. ANALYZE: Use gh CLI to understand context (pr view, issue view, repo status)
+          2. DECIDE: Choose optimal MCP engineering approach based on event type and current state
+          3. EXECUTE: Implement with full autonomy and responsibility for MCP standards
+          4. COMMUNICATE: Report via GitHub comments using /tmp files + gh CLI
+
+          KEY BEHAVIORS:
+          - For PR comments: Check if PR is open/merged, then update existing or create new accordingly
+          - For issues: Implement MCP solution and create PR linking back to issue
+          - For reviews: Provide thorough MCP architecture analysis and approve/request changes as appropriate
+          - Always verify work with quality checks before pushing
+          - Focus on MCP protocol compliance, TypeScript best practices, and clean architecture
+
+          EXECUTION REQUIREMENTS:
+          - Run npm run lint, npm run test before any commits
+          - Use conventional commits (feat:, fix:, refactor:, etc.) for semantic release
+          - Test MCP tools with npm run mcp:inspect when implementing new features
+          - Communicate ONLY via GitHub comments (users cannot see console output)
+          - Draft comments in /tmp/ files, post with gh CLI, then cleanup
+
+          MCP ENGINEERING FOCUS:
+          - Tool definitions with proper Zod schemas
+          - Controller layer business logic with error handling
+          - Service layer for external API interactions
+          - Proper MCP transport support (STDIO and HTTP)
+          - CLI interfaces for direct tool usage
+          - Comprehensive testing of MCP tools and controllers
+
+          TOOLS AT YOUR DISPOSAL:
+          - gh CLI for all GitHub operations
+          - git for version control
+          - npm for package management and script execution
+          - Full file system access for MCP server development
+          - All project dependencies already installed
+          - MCP Inspector available via npm run mcp:inspect
+
+          Now analyze the event and take appropriate MCP engineering action."
+
+          echo "Executing Gemini CLI..."
+          gemini -y -m gemini-2.5-flash -p "$PROMPT"
