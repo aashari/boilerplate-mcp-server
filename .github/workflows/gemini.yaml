@@ -52,7 +52,7 @@ jobs:
       - name: Install Dependencies
         run: |
           echo "Installing project dependencies..."
-          npm install
+          npm install || true
 
       - name: Install Gemini CLI
         run: |
@@ -70,9 +70,10 @@ jobs:
           gh --version
 
       - name: Build Project
+        continue-on-error: true
         run: |
           echo "Building MCP server..."
-          npm run build
+          npm run build || echo "Build failed - Gemini will analyze the issues"
 
       - name: Prepare Repository Context
         run: |
