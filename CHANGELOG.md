@@ -1,3 +1,10 @@
+## [1.13.2](https://github.com/aashari/boilerplate-mcp-server/compare/v1.13.1...v1.13.2) (2025-08-02)
+
+
+### Bug Fixes
+
+* debug GEMINI_API_KEY availability in workflow ([20581bd](https://github.com/aashari/boilerplate-mcp-server/commit/20581bdde13d0b8306c665c2619f5f6dccccfb5a))
+
 ## [1.13.1](https://github.com/aashari/boilerplate-mcp-server/compare/v1.13.0...v1.13.1) (2025-08-02)
 
 
