@@ -1,20 +1,19 @@
 # Boilerplate MCP Server
 
-A foundation for developing custom Model Context Protocol (MCP) servers in TypeScript. Provides a complete layered architecture pattern, working example tools, and developer infrastructure to connect AI assistants with external APIs and data sources.
+A production-ready foundation for developing custom Model Context Protocol (MCP) servers in TypeScript. Provides a complete layered architecture pattern, working example implementation, and comprehensive developer infrastructure to connect AI assistants with external APIs and data sources.
 
 [![NPM Version](https://img.shields.io/npm/v/@aashari/boilerplate-mcp-server)](https://www.npmjs.com/package/@aashari/boilerplate-mcp-server)
-[![Build Status](https://img.shields.io/github/workflow/status/aashari/boilerplate-mcp-server/CI)](https://github.com/aashari/boilerplate-mcp-server/actions)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 ## Features
 
-- **Multiple Transport Support**: STDIO and Streamable HTTP transports
-- **Production-Ready Architecture**: Clean separation between CLI, tools, controllers, and services
-- **Type Safety**: Built with TypeScript for improved developer experience
-- **Working Example**: Fully implemented IP address lookup tools
-- **Testing Framework**: Ready-to-use testing infrastructure with coverage reporting
-- **Complete Developer Tooling**: Pre-configured ESLint, Prettier, TypeScript
+- **Dual Transport Support**: STDIO and Streamable HTTP transports with automatic fallback
+- **5-Layer Architecture**: Clean separation between CLI, tools, controllers, services, and utilities
+- **Type Safety**: Full TypeScript implementation with Zod schema validation
+- **Complete IP Address Example**: Tools, resources, and CLI commands for IP geolocation
+- **Comprehensive Testing**: Unit and integration tests with coverage reporting
+- **Production Tooling**: ESLint, Prettier, semantic-release, and MCP Inspector integration
+- **Error Handling**: Structured error handling with contextual logging
 
 ## What is MCP?
 
@@ -35,35 +34,40 @@ cd boilerplate-mcp-server
 # Install dependencies
 npm install
 
+# Build the project
+npm run build
+
 # Run in different modes:
 
 # 1. CLI Mode - Execute commands directly
 npm run cli -- get-ip-details 8.8.8.8
+npm run cli -- get-ip-details              # Get your current IP
+npm run cli -- get-ip-details 1.1.1.1 --include-extended-data
 
-# 2. STDIO Transport - For direct AI assistant integration
+# 2. STDIO Transport - For AI assistant integration (Claude Desktop, Cursor)
 npm run mcp:stdio
 
-# 3. HTTP Transport - For web-based integrations (default)
+# 3. HTTP Transport - For web-based integrations
 npm run mcp:http
 
 # 4. Development with MCP Inspector
-npm run mcp:inspect
+npm run mcp:inspect                         # Auto-opens browser with debugging UI
 ```
 
 ## Transport Modes
 
 ### STDIO Transport
-- Traditional subprocess communication via stdin/stdout
-- Ideal for local AI assistant integrations
-- Run with: `TRANSPORT_MODE=stdio npm run build && node dist/index.js`
+- JSON-RPC communication via stdin/stdout
+- Used by Claude Desktop, Cursor AI, and other local AI assistants
+- Run with: `TRANSPORT_MODE=stdio node dist/index.js`
 
-### Streamable HTTP Transport (Default)
-- Modern HTTP-based transport with Server-Sent Events (SSE)
-- Supports multiple concurrent connections
-- Runs on port 3000 by default (configurable via PORT env var)
-- Endpoint: `http://localhost:3000/mcp`
-- Health check: `http://localhost:3000/`
-- Run with: `TRANSPORT_MODE=http npm run build && node dist/index.js`
+### Streamable HTTP Transport
+- HTTP-based transport with Server-Sent Events (SSE)
+- Supports multiple concurrent connections and web integrations
+- Runs on port 3000 by default (configurable via `PORT` env var)
+- MCP Endpoint: `http://localhost:3000/mcp`
+- Health Check: `http://localhost:3000/` → Returns server version
+- Run with: `TRANSPORT_MODE=http node dist/index.js`
 
 ## Architecture Overview
 
@@ -72,96 +76,138 @@ npm run mcp:inspect
 
 ```
 src/
-├── cli/              # Command-line interfaces
-│   ├── index.ts      # CLI entry point
-│   └── *.cli.ts      # Feature-specific CLI modules
-├── controllers/      # Business logic
-│   └── *.controller.ts  # Feature controllers
-├── services/         # External API interactions
-│   └── *.service.ts  # Service modules
-├── tools/            # MCP tool definitions
-│   ├── *.tool.ts     # Tool implementations
-│   └── *.types.ts    # Tool argument schemas
-├── resources/        # MCP resource definitions
-│   └── *.resource.ts # Resource implementations
-├── types/            # Type definitions
-│   └── common.types.ts # Shared type definitions
-├── utils/            # Shared utilities
-│   ├── logger.util.ts  # Structured logging
-│   ├── error.util.ts   # Error handling
-│   └── ...           # Other utility modules
-└── index.ts          # Server entry point
+├── cli/                    # Command-line interfaces
+│   ├── index.ts            # CLI entry point with Commander setup
+│   └── ipaddress.cli.ts    # IP address CLI commands
+├── controllers/            # Business logic orchestration  
+│   ├── ipaddress.controller.ts    # IP lookup business logic
+│   └── ipaddress.formatter.ts     # Response formatting
+├── services/               # External API interactions
+│   ├── vendor.ip-api.com.service.ts  # ip-api.com service
+│   └── vendor.ip-api.com.types.ts    # Service type definitions
+├── tools/                  # MCP tool definitions (AI interface)
+│   ├── ipaddress.tool.ts   # IP lookup tool for AI assistants
+│   └── ipaddress.types.ts  # Tool argument schemas
+├── resources/              # MCP resource definitions
+│   └── ipaddress.resource.ts # IP lookup resource (URI: ip://address)
+├── types/                  # Global type definitions
+│   └── common.types.ts     # Shared interfaces (ControllerResponse, etc.)
+├── utils/                  # Shared utilities
+│   ├── logger.util.ts      # Contextual logging system
+│   ├── error.util.ts       # MCP-specific error formatting
+│   ├── error-handler.util.ts # Error handling utilities
+│   ├── config.util.ts      # Environment configuration
+│   ├── constants.util.ts   # Version and package constants
+│   ├── formatter.util.ts   # Markdown formatting
+│   └── transport.util.ts   # HTTP transport utilities
+└── index.ts                # Server entry point (dual transport)
 ```
 
 </details>
 
-## Layered Architecture
+## 5-Layer Architecture
 
 The boilerplate follows a clean, layered architecture that promotes maintainability and clear separation of concerns:
 
-### 1. CLI Layer (`src/cli/*.cli.ts`)
+### 1. CLI Layer (`src/cli/`)
 
-- **Purpose**: Command-line interfaces that parse arguments and call controllers
-- **Pattern**: Use `commander` for argument parsing, call controllers, handle errors with `handleCliError`
-- **Naming**: `<feature>.cli.ts` 
+- **Purpose**: Command-line interfaces for direct tool usage and testing
+- **Implementation**: Commander-based argument parsing with contextual error handling
+- **Example**: `get-ip-details [ipAddress] --include-extended-data --no-use-https`
+- **Pattern**: Register commands → Parse arguments → Call controllers → Handle errors
 
-### 2. Tools Layer (`src/tools/*.tool.ts`)
+### 2. Tools Layer (`src/tools/`)
 
-- **Purpose**: MCP tool definitions exposed to AI assistants
-- **Pattern**: Use `zod` for schema validation, call controllers, format responses for MCP
-- **Naming**: `<feature>.tool.ts` with types in `<feature>.types.ts`
+- **Purpose**: MCP tool definitions that AI assistants can invoke
+- **Implementation**: Zod schema validation with structured responses
+- **Example**: `ip_get_details` tool with optional IP address and configuration options
+- **Pattern**: Define schema → Validate args → Call controller → Format MCP response
 
-### 3. Controllers Layer (`src/controllers/*.controller.ts`)
+### 3. Resources Layer (`src/resources/`)
 
-- **Purpose**: Business logic orchestration, error handling, response formatting
-- **Pattern**: Return standardized `ControllerResponse` objects, throw errors with context
-- **Naming**: `<feature>.controller.ts` with optional `<feature>.formatter.ts`
+- **Purpose**: MCP resources providing contextual data accessible via URIs
+- **Implementation**: Resource handlers that respond to URI-based requests
+- **Example**: `ip://8.8.8.8` resource providing IP geolocation data
+- **Pattern**: Register URI patterns → Parse requests → Return formatted content
 
-### 4. Services Layer (`src/services/*.service.ts`)
+### 4. Controllers Layer (`src/controllers/`)
 
-- **Purpose**: External API interactions and data handling
-- **Pattern**: Pure API calls with minimal logic, return raw data
-- **Naming**: `<feature>.service.ts` or `vendor.<vendor>.<feature>.service.ts`
+- **Purpose**: Business logic orchestration with comprehensive error handling
+- **Implementation**: Options validation, fallback logic, response formatting
+- **Example**: IP lookup with HTTPS fallback, test environment detection, API token validation
+- **Pattern**: Validate inputs → Apply defaults → Call services → Format responses
 
-### 5. Utils Layer (`src/utils/*.util.ts`)
+### 5. Services Layer (`src/services/`)
 
-- **Purpose**: Shared functionality across the application
-- **Key Utils**: Logging, error handling, formatting, configuration
+- **Purpose**: Direct external API interactions with minimal business logic
+- **Implementation**: HTTP transport utilities with structured error handling
+- **Example**: ip-api.com API calls with authentication and field selection
+- **Pattern**: Build requests → Make API calls → Validate responses → Return raw data
+
+### 6. Utils Layer (`src/utils/`)
+
+- **Purpose**: Shared functionality across all layers
+- **Key Components**: 
+  - `logger.util.ts`: Contextual logging (file:method context)
+  - `error.util.ts`: MCP-specific error formatting
+  - `transport.util.ts`: HTTP/API utilities with retry logic
+  - `config.util.ts`: Environment configuration management
 
 ## Developer Guide
 
 ### Development Scripts
 
 ```bash
-# Development
-npm run build               # Build TypeScript
-npm run clean               # Clean build artifacts
+# Build and Clean
+npm run build               # Build TypeScript to dist/
+npm run clean               # Remove dist/ and coverage/
+npm run prepare             # Build + ensure executable permissions (for npm publish)
 
-# Running different modes
-npm run cli -- [command]    # Run CLI commands
-npm run mcp:stdio          # Run with STDIO transport
-npm run mcp:http           # Run with HTTP transport (default)
-npm run mcp:inspect        # Run with MCP Inspector
+# CLI Testing
+npm run cli -- get-ip-details 8.8.8.8                    # Test specific IP
+npm run cli -- get-ip-details --include-extended-data    # Test with extended data
+npm run cli -- get-ip-details --no-use-https             # Test with HTTP
 
-# Development modes
-npm run dev:stdio          # STDIO with inspector
-npm run dev:http           # HTTP in development mode
+# MCP Server Modes
+npm run mcp:stdio           # STDIO transport for AI assistants
+npm run mcp:http            # HTTP transport on port 3000
+npm run mcp:inspect         # HTTP + auto-open MCP Inspector
+
+# Development with Debugging
+npm run dev:stdio           # STDIO with MCP Inspector integration
+npm run dev:http            # HTTP with debug logging enabled
 
 # Testing
-npm test                    # Run all tests
+npm test                    # Run all tests (Jest)
 npm run test:coverage       # Generate coverage report
+npm run test:cli            # Run CLI-specific tests
 
 # Code Quality
-npm run lint                # Run ESLint
-npm run format              # Format with Prettier
+npm run lint                # ESLint with TypeScript rules
+npm run format              # Prettier formatting
+npm run update:deps         # Update dependencies
 ```
 
 ### Environment Variables
 
-- `TRANSPORT_MODE`: Set to `stdio` or `http` (default: `http`)
+#### Core Configuration
+- `TRANSPORT_MODE`: Transport mode (`stdio` | `http`, default: `stdio`)  
 - `PORT`: HTTP server port (default: `3000`)
-- `DEBUG`: Enable debug logging (default: `false`)
-- `IPAPI_API_TOKEN`: API token for ip-api.com (optional)
+- `DEBUG`: Enable debug logging (`true` | `false`, default: `false`)
+
+#### IP API Configuration  
+- `IPAPI_API_TOKEN`: API token for ip-api.com extended data (optional, free tier available)
+
+#### Example `.env` File
+```bash
+# Basic configuration
+TRANSPORT_MODE=http
+PORT=3001
+DEBUG=true
+
+# Extended data (requires ip-api.com account)
+IPAPI_API_TOKEN=your_token_here
+```
 
 ### Debugging Tools
 
@@ -198,63 +244,110 @@ Create `~/.mcp/configs.json`:
 
 ### 1. Define Service Layer
 
-Create a new service in `src/services/` to interact with your external API:
+Create a new service in `src/services/` following the vendor-specific naming pattern:
 
 ```typescript
-// src/services/example.service.ts
+// src/services/vendor.example-api.service.ts
 import { Logger } from '../utils/logger.util.js';
+import { fetchApi } from '../utils/transport.util.js';
+import { ExampleApiResponse, ExampleApiRequestOptions } from './vendor.example-api.types.js';
+import { createApiError, McpError } from '../utils/error.util.js';
 
-const logger = Logger.forContext('services/example.service.ts');
+const serviceLogger = Logger.forContext('services/vendor.example-api.service.ts');
 
-export async function getData(param: string): Promise<any> {
-	logger.debug('Getting data', { param });
-	// API interaction code here
-	return { result: 'example data' };
+async function get(
+	param?: string,
+	options: ExampleApiRequestOptions = {}
+): Promise<ExampleApiResponse> {
+	const methodLogger = serviceLogger.forMethod('get');
+	methodLogger.debug(`Calling Example API with param: ${param}`);
+
+	try {
+		const url = `https://api.example.com/${param || 'default'}`;
+		const rawData = await fetchApi<ExampleApiResponse>(url, {
+			headers: options.apiKey ? { 'Authorization': `Bearer ${options.apiKey}` } : {}
+		});
+
+		methodLogger.debug('Received successful response from Example API');
+		return rawData;
+	} catch (error) {
+		methodLogger.error('Service error fetching data', error);
+		
+		if (error instanceof McpError) {
+			throw error;
+		}
+		
+		throw createApiError(
+			'Unexpected service error while fetching data',
+			undefined,
+			error
+		);
+	}
 }
+
+export default { get };
 ```
 
 ### 2. Create Controller
 
-Add a controller in `src/controllers/` to handle business logic:
+Add a controller in `src/controllers/` to handle business logic with error context:
 
 ```typescript
 // src/controllers/example.controller.ts
 import { Logger } from '../utils/logger.util.js';
-import * as exampleService from '../services/example.service.js';
-import { formatMarkdown } from '../utils/formatter.util.js';
-import { handleControllerError } from '../utils/error-handler.util.js';
+import exampleService from '../services/vendor.example-api.service.js';
+import { formatExample } from './example.formatter.js';
+import { handleControllerError, buildErrorContext } from '../utils/error-handler.util.js';
 import { ControllerResponse } from '../types/common.types.js';
+import { config } from '../utils/config.util.js';
 
 const logger = Logger.forContext('controllers/example.controller.ts');
 
 export interface GetDataOptions {
 	param?: string;
+	includeMetadata?: boolean;
 }
 
-export async function getData(
-	options: GetDataOptions = {},
+async function getData(
+	options: GetDataOptions = {}
 ): Promise<ControllerResponse> {
+	const methodLogger = logger.forMethod('getData');
+	methodLogger.debug(`Getting data for param: ${options.param || 'default'}`, options);
+
 	try {
-		logger.debug('Getting data with options', options);
-
-		const data = await exampleService.getData(options.param || 'default');
-
-		const content = formatMarkdown(data);
-
-		return { content };
-	} catch (error) {
-		throw handleControllerError(error, {
-			entityType: 'ExampleData',
-			operation: 'getData',
-			source: 'controllers/example.controller.ts',
+		// Apply business logic and defaults
+		const apiKey = config.get('EXAMPLE_API_TOKEN');
+		
+		// Call service layer
+		const data = await exampleService.get(options.param, {
+			apiKey,
+			includeMetadata: options.includeMetadata ?? false
 		});
+		
+		// Format response
+		const formattedContent = formatExample(data);
+		return { content: formattedContent };
+		
+	} catch (error) {
+		throw handleControllerError(
+			error,
+			buildErrorContext(
+				'ExampleData',
+				'getData',
+				'controllers/example.controller.ts@getData',
+				options.param || 'default',
+				{ options }
+			)
+		);
 	}
 }
+
+export default { getData };
 ```
 
 ### 3. Implement MCP Tool
 
-Create a tool definition in `src/tools/`:
+Create a tool definition in `src/tools/` following the registration pattern:
 
 ```typescript
 // src/tools/example.tool.ts
@@ -262,74 +355,109 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { Logger } from '../utils/logger.util.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
-import * as exampleController from '../controllers/example.controller.js';
+import exampleController from '../controllers/example.controller.js';
 
 const logger = Logger.forContext('tools/example.tool.ts');
 
-const GetDataArgs = z.object({
-	param: z.string().optional().describe('Optional parameter'),
+// Define Zod schema for tool arguments
+const GetDataSchema = z.object({
+	param: z.string().optional().describe('Optional parameter for the API call'),
+	includeMetadata: z.boolean().optional().default(false)
+		.describe('Whether to include additional metadata in the response')
 });
 
-type GetDataArgsType = z.infer<typeof GetDataArgs>;
-
-async function handleGetData(args: GetDataArgsType) {
+async function handleGetData(args: Record<string, unknown>) {
+	const methodLogger = logger.forMethod('handleGetData');
+	
 	try {
-		logger.debug('Tool get_data called', args);
+		methodLogger.debug('Tool example_get_data called', args);
 
+		// Validate arguments with Zod
+		const validatedArgs = GetDataSchema.parse(args);
+
+		// Call controller
 		const result = await exampleController.getData({
-			param: args.param,
+			param: validatedArgs.param,
+			includeMetadata: validatedArgs.includeMetadata
 		});
 
+		// Return MCP-formatted response
 		return {
-			content: [{ type: 'text' as const, text: result.content }],
+			content: [
+				{
+					type: 'text' as const,
+					text: result.content
+				}
+			]
 		};
 	} catch (error) {
-		logger.error('Tool get_data failed', error);
+		methodLogger.error('Tool example_get_data failed', error);
 		return formatErrorForMcpTool(error);
 	}
 }
 
-export function register(server: McpServer) {
+// Registration function following the pattern used by existing tools
+function registerTools(server: McpServer) {
+	const registerLogger = logger.forMethod('registerTools');
+	registerLogger.debug('Registering example tools...');
+
 	server.tool(
-		'get_data',
-		`Gets data from the example API, optionally using \`param\`.
-Use this to fetch example data. Returns formatted data as Markdown.`,
-		GetDataArgs.shape,
-		handleGetData,
+		'example_get_data',
+		`Gets data from the Example API with optional parameter.
+Use this tool to fetch example data. Returns formatted data as Markdown.`,
+		GetDataSchema.shape,
+		handleGetData
 	);
+
+	registerLogger.debug('Example tools registered successfully');
 }
+
+export default { registerTools };
 ```
 
 ### 4. Add CLI Support
 
-Create a CLI command in `src/cli/`:
+Create a CLI command in `src/cli/` following the Commander pattern:
 
 ```typescript
 // src/cli/example.cli.ts
-import { program } from 'commander';
+import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
-import * as exampleController from '../controllers/example.controller.js';
-import { handleCliError } from '../utils/error-handler.util.js';
+import exampleController from '../controllers/example.controller.js';
+import { handleCliError } from '../utils/error.util.js';
 
 const logger = Logger.forContext('cli/example.cli.ts');
 
-program
-	.command('get-data')
-	.description('Get example data')
-	.option('--param <value>', 'Optional parameter')
-	.action(async (options) => {
-		try {
-			logger.debug('CLI get-data called', options);
+function register(program: Command) {
+	const methodLogger = logger.forMethod('register');
+	methodLogger.debug('Registering example CLI commands...');
 
-			const result = await exampleController.getData({
-				param: options.param,
-			});
+	program
+		.command('get-data')
+		.description('Gets data from the Example API')
+		.argument('[param]', 'Optional parameter for the API call')
+		.option('-m, --include-metadata', 'Include additional metadata in response')
+		.action(async (param, options) => {
+			const actionLogger = logger.forMethod('action:get-data');
+			
+			try {
+				actionLogger.debug('CLI get-data called', { param, options });
 
-			console.log(result.content);
-		} catch (error) {
-			handleCliError(error);
-		}
-	});
+				const result = await exampleController.getData({
+					param,
+					includeMetadata: options.includeMetadata || false
+				});
+
+				console.log(result.content);
+			} catch (error) {
+				handleCliError(error);
+			}
+		});
+
+	methodLogger.debug('Example CLI commands registered successfully');
+}
+
+export default { register };
 ```
 
 ### 5. Register Components
@@ -337,48 +465,142 @@ program
 Update the entry points to register your new components:
 
 ```typescript
-// In src/cli/index.ts
-import '../cli/example.cli.js';
+// 1. Register CLI in src/cli/index.ts
+import exampleCli from './example.cli.js';
 
-// In src/index.ts (for the tool)
-import exampleTool from './tools/example.tool.js';
-// Then in registerTools function:
-exampleTool.register(server);
+export async function runCli(args: string[]) {
+	// ... existing setup code ...
+	
+	// Register CLI commands
+	exampleCli.register(program);  // Add this line
+	
+	// ... rest of function
+}
+
+// 2. Register Tools in src/index.ts
+import exampleTools from './tools/example.tool.js';
+
+// In the startServer function, after existing registrations:
+exampleTools.registerTools(serverInstance);
 ```
 
 </details>
 
+## IP Address Example Implementation
+
+The boilerplate includes a complete IP address geolocation example demonstrating all layers:
+
+### Available Tools & Commands
+
+**CLI Commands:**
+```bash
+npm run cli -- get-ip-details                           # Get current public IP
+npm run cli -- get-ip-details 8.8.8.8                  # Get details for specific IP
+npm run cli -- get-ip-details 1.1.1.1 --include-extended-data   # With extended data
+npm run cli -- get-ip-details 8.8.8.8 --no-use-https   # Force HTTP (for free tier)
+```
+
+**MCP Tools:**
+- `ip_get_details` - IP geolocation lookup for AI assistants
+
+**MCP Resources:**
+- `ip://` - Current IP details  
+- `ip://8.8.8.8` - Specific IP details
+
+### Features Demonstrated
+
+- **Fallback Logic**: HTTPS → HTTP fallback for free tier users
+- **Environment Detection**: Different behavior in test vs production
+- **API Token Support**: Optional token for extended data (ASN, mobile detection, etc.)
+- **Error Handling**: Structured errors for private/reserved IP addresses
+- **Response Formatting**: Clean Markdown output with geolocation data
+
+### Configuration Options
+
+```bash
+# Optional - for extended data features
+IPAPI_API_TOKEN=your_token_from_ip-api.com
+
+# Development
+DEBUG=true                    # Enable detailed logging
+TRANSPORT_MODE=http          # Use HTTP transport
+PORT=3001                    # Custom port
+```
+
 ## Publishing Your MCP Server
 
-1. Update package.json with your details:
+1. **Customize Package Details:**
    ```json
    {
      "name": "your-mcp-server-name",
-     "version": "1.0.0",
+     "version": "1.0.0", 
      "description": "Your custom MCP server",
      "author": "Your Name",
-     // Other fields...
+     "keywords": ["mcp", "your-domain", "ai-integration"]
    }
    ```
 
-2. Update README.md with your tool documentation
-3. Build: `npm run build`
-4. Test: `npm run mcp:stdio` and `npm run mcp:http`
-5. Publish: `npm publish`
+2. **Update Documentation:** Replace IP address examples with your use case
+3. **Test Thoroughly:**
+   ```bash
+   npm run build && npm test
+   npm run cli -- your-command
+   npm run mcp:stdio    # Test with MCP Inspector
+   ```
+4. **Publish:** `npm publish` (requires npm login)
 
-## Testing Best Practices
+## Testing Strategy
 
-- **Unit Tests**: Test utils and pure functions in isolation
+The boilerplate includes comprehensive testing infrastructure:
+
+### Test Structure
+```
+tests/               # Not present - tests are in src/
+src/
+├── **/*.test.ts     # Co-located with source files
+├── utils/           # Utility function tests
+├── controllers/     # Business logic tests  
+├── services/        # API integration tests
+└── cli/             # CLI command tests
+```
+
+### Testing Best Practices
+
+- **Unit Tests**: Test utilities and pure functions (`*.util.test.ts`)
 - **Controller Tests**: Test business logic with mocked service calls
-- **Integration Tests**: Test CLI with real dependencies
-- **Coverage Goal**: Aim for >80% test coverage
+- **Service Tests**: Test API integration with real/mocked HTTP calls
+- **CLI Tests**: Test command parsing and execution
+- **Test Environment Detection**: Automatic test mode handling in controllers
+
+### Running Tests
+
+```bash
+npm test                    # Run all tests
+npm run test:coverage       # Generate coverage report  
+npm run test:cli           # CLI-specific tests only
+```
+
+### Coverage Goals
+- Target: >80% test coverage
+- Focus on business logic (controllers) and utilities
+- Mock external services appropriately
 
 ## License
 
 [ISC License](https://opensource.org/licenses/ISC)
 
-## Resources
+## Resources & Documentation
 
-- [MCP Specification](https://github.com/modelcontextprotocol/mcp-spec)
-- [Official MCP Documentation](https://www.modelcontextprotocol.ai/)
+### MCP Protocol Resources
+- [MCP Specification](https://modelcontextprotocol.io/specification/2025-06-18)
+- [MCP SDK Documentation](https://github.com/modelcontextprotocol/sdk)
+- [MCP Inspector](https://github.com/modelcontextprotocol/inspector) - Visual debugging tool
+
+### Implementation References
+- [Anthropic MCP Announcement](https://www.anthropic.com/news/model-context-protocol)
+- [Awesome MCP Servers](https://github.com/wong2/awesome-mcp-servers) - Community examples
 - [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+
+### Your MCP Server Ecosystem
+- [All @aashari MCP Servers](https://www.npmjs.com/~aashari) - NPM packages
+- [GitHub Repositories](https://github.com/aashari?tab=repositories&q=mcp-server) - Source code
