@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/aashari-boilerplate-mcp-server-badge.png)](https://mseep.ai/app/aashari-boilerplate-mcp-server)
+
 # Boilerplate MCP Server
 
 A production-ready foundation for developing custom Model Context Protocol (MCP) servers in TypeScript. Provides a complete layered architecture pattern, working example implementation, and comprehensive developer infrastructure to connect AI assistants with external APIs and data sources.
