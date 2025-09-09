@@ -7,12 +7,11 @@ describe('IP Address CLI Commands', () => {
 	// Setup: Ensure config is loaded
 	beforeAll(() => {
 		config.load(); // Ensure config is loaded
-		// Check if credentials are available
+		// Check if credentials are available for testing
 		const credentials = getIpApiCredentials();
 		if (!credentials.apiToken) {
-			console.warn(
-				'WARNING: No IP API token available. Tests will run with free tier API access.',
-			);
+			// Note: API token not available - tests will use free tier access
+			// This is expected behavior in most test environments
 		}
 	});
 

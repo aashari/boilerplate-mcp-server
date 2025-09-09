@@ -310,10 +310,13 @@ class Logger {
 			console.error(`Failed to write to log file: ${err}`);
 		}
 
-		if (process.env.NODE_ENV === 'test') {
-			console[level](logMessage);
-		} else {
-			console.error(logMessage);
+		// Only output to console if not in test environment or if debug is enabled
+		if (process.env.NODE_ENV !== 'test' || process.env.DEBUG === 'true') {
+			if (process.env.NODE_ENV === 'test') {
+				console[level](logMessage);
+			} else {
+				console.error(logMessage);
+			}
 		}
 	}
 
