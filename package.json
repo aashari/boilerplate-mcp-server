@@ -88,12 +88,16 @@
 	"jest": {
 		"preset": "ts-jest",
 		"testEnvironment": "node",
+		"setupFilesAfterEnv": [
+			"<rootDir>/src/utils/jest.setup.ts"
+		],
 		"testMatch": [
 			"**/src/**/*.test.ts"
 		],
 		"collectCoverageFrom": [
 			"src/**/*.ts",
-			"!src/**/*.test.ts"
+			"!src/**/*.test.ts",
+			"!src/utils/jest.setup.ts"
 		],
 		"transform": {
 			"^.+\\.tsx?$": [

@@ -58,7 +58,14 @@ class ConfigLoader {
 		);
 
 		try {
-			const result = dotenv.config();
+			const result = dotenv.config({
+				// Suppress dotenv output in test environment
+				debug:
+					process.env.NODE_ENV !== 'test' &&
+					process.env.DEBUG === 'true',
+				// Suppress promotional messages in test environment (dotenv v17+)
+				quiet: process.env.NODE_ENV === 'test',
+			});
 			if (result.error) {
 				methodLogger.debug('No .env file found or error reading it');
 				return;
