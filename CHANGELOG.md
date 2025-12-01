@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/aashari/boilerplate-mcp-server/compare/v1.16.0...v1.16.1) (2025-12-01)
+
+
+### Bug Fixes
+
+* **deps:** resolve security vulnerabilities in body-parser and js-yaml ([abd1c08](https://github.com/aashari/boilerplate-mcp-server/commit/abd1c08d9c777ffb04dc851c3c14eeb8a4a09e1c))
+
 # [1.16.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.15.0...v1.16.0) (2025-12-01)
 
 

@@ -1,6 +1,6 @@
 {
 	"name": "@aashari/boilerplate-mcp-server",
-	"version": "1.16.0",
+	"version": "1.16.1",
 	"description": "TypeScript MCP server boilerplate with STDIO and HTTP transport support, CLI tools, and extensible architecture",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
