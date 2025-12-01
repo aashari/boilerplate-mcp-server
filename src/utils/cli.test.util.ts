@@ -130,7 +130,32 @@ export class CliTestUtil {
 	}
 
 	/**
+	 * Validates TOON output format
+	 * TOON uses "key: value" syntax for objects
+	 */
+	static validateToonOutput(output: string): void {
+		// Filter out debug log lines for cleaner validation
+		const cleanOutput = output
+			.split('\n')
+			.filter((line) => !line.match(/^\[\d{2}:\d{2}:\d{2}\]/))
+			.join('\n');
+
+		// TOON format characteristics:
+		// - Key-value pairs in "key: value" format
+		// - No curly braces for objects
+		// - Arrays use [count]{fields}: notation
+		const toonPatterns = [
+			/^\w+:\s*.+/m, // key: value pattern
+		];
+
+		expect(toonPatterns.some((pattern) => pattern.test(cleanOutput))).toBe(
+			true,
+		);
+	}
+
+	/**
 	 * Validates Markdown output format
+	 * @deprecated Use validateToonOutput for new code - output is now TOON by default
 	 */
 	static validateMarkdownOutput(output: string): void {
 		// Filter out debug log lines for cleaner validation

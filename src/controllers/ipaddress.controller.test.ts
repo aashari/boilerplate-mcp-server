@@ -7,12 +7,37 @@ describe('IP Address Controller', () => {
 			// Call the function with the real API
 			const result = await ipAddressController.get({});
 
-			// Verify the result is a valid IP address format with our new structure
-			expect(result.content).toContain('# IP Address Details:');
-			expect(result.content).toContain('## Location Information');
-			expect(result.content).toContain('## Network Information');
-			expect(result.content).toContain('- **IP Address**:');
+			// Output can be TOON (production) or JSON (test fallback)
+			// Check for either format
+			const isToon = result.content.includes('status:') && !result.content.startsWith('{');
+			const isJson = result.content.startsWith('{');
+
+			expect(isToon || isJson).toBe(true);
+
+			if (isJson) {
+				const parsed = JSON.parse(result.content);
+				expect(parsed).toHaveProperty('status');
+				expect(parsed).toHaveProperty('query');
+				expect(parsed).toHaveProperty('country');
+				expect(parsed).toHaveProperty('city');
+			} else {
+				expect(result.content).toContain('status:');
+				expect(result.content).toContain('query:');
+				expect(result.content).toContain('country:');
+				expect(result.content).toContain('city:');
+			}
 		}, 10000); // Increase timeout for API call
+
+		it('should return JSON format when outputFormat is json', async () => {
+			// Call the function with JSON output format
+			const result = await ipAddressController.get({ outputFormat: 'json' });
+
+			// Verify the result is valid JSON
+			const parsed = JSON.parse(result.content);
+			expect(parsed).toHaveProperty('status');
+			expect(parsed).toHaveProperty('query');
+			expect(parsed).toHaveProperty('country');
+		}, 10000);
 	});
 
 	describe('get: specific IP address', () => {
@@ -23,13 +48,44 @@ describe('IP Address Controller', () => {
 			// Call the function with the real API
 			const result = await ipAddressController.get({ ipAddress });
 
-			// Verify the response contains expected fields in our new structure
-			expect(result.content).toContain('# IP Address Details: 8.8.8.8');
-			expect(result.content).toContain('## Location Information');
-			expect(result.content).toContain('## Network Information');
-			expect(result.content).toContain(`- **IP Address**: ${ipAddress}`);
-			expect(result.content).toContain('Google'); // Google DNS should have this in org or ISP
+			// Output can be TOON or JSON (fallback)
+			const isToon = result.content.includes('query: 8.8.8.8');
+			const isJson = result.content.startsWith('{');
+
+			expect(isToon || isJson).toBe(true);
+
+			if (isJson) {
+				const parsed = JSON.parse(result.content);
+				expect(parsed.query).toBe('8.8.8.8');
+				expect(parsed.status).toBe('success');
+				expect(parsed).toHaveProperty('country');
+				expect(JSON.stringify(parsed)).toMatch(/Google/i);
+			} else {
+				expect(result.content).toContain('query: 8.8.8.8');
+				expect(result.content).toContain('status: success');
+				expect(result.content).toContain('country:');
+				expect(result.content).toMatch(/Google/i);
+			}
 		}, 10000); // Increase timeout for API call
+
+		it('should apply JQ filter correctly', async () => {
+			const ipAddress = '8.8.8.8';
+
+			// Call with a JQ filter to extract specific fields
+			const result = await ipAddressController.get({
+				ipAddress,
+				jq: '{ip: query, country: country}',
+				outputFormat: 'json',
+			});
+
+			// Verify filtered result
+			const parsed = JSON.parse(result.content);
+			expect(parsed).toHaveProperty('ip', '8.8.8.8');
+			expect(parsed).toHaveProperty('country');
+			// Should NOT have other fields
+			expect(parsed).not.toHaveProperty('city');
+			expect(parsed).not.toHaveProperty('isp');
+		}, 10000);
 
 		it('should handle invalid IP addresses', async () => {
 			// Use an invalid IP address

@@ -16,16 +16,17 @@ describe('IP Address CLI Commands', () => {
 	});
 
 	describe('get-ip-details command', () => {
-		it('should retrieve details for the current device IP', async () => {
+		it('should retrieve details for the current device IP in TOON format', async () => {
 			const result = await CliTestUtil.runCommand(['get-ip-details']);
 
 			expect(result.exitCode).toBe(0);
-			CliTestUtil.validateMarkdownOutput(result.stdout);
+			// TOON format validation - check for key: value patterns
+			CliTestUtil.validateToonOutput(result.stdout);
 			CliTestUtil.validateOutputContains(result.stdout, [
-				'# IP Address Details:',
-				'## Location Information',
-				'## Network Information',
-				'- **IP Address**:',
+				'status:',
+				'query:',
+				'country:',
+				'city:',
 			]);
 			// Check that stderr only contains expected debug logs if DEBUG is on
 			if (process.env.DEBUG) {
@@ -42,13 +43,12 @@ describe('IP Address CLI Commands', () => {
 			]);
 
 			expect(result.exitCode).toBe(0);
-			CliTestUtil.validateMarkdownOutput(result.stdout);
+			CliTestUtil.validateToonOutput(result.stdout);
 			CliTestUtil.validateOutputContains(result.stdout, [
-				'# IP Address Details: 8.8.8.8',
-				'## Location Information',
-				'## Network Information',
-				'- **IP Address**: 8.8.8.8',
-				'Google', // Google DNS should consistently have Google mentioned somewhere
+				'query: 8.8.8.8',
+				'status: success',
+				'country:',
+				/Google/i, // Google DNS should consistently have Google mentioned somewhere
 			]);
 			// Check that stderr only contains expected debug logs if DEBUG is on
 			if (process.env.DEBUG) {
@@ -56,6 +56,49 @@ describe('IP Address CLI Commands', () => {
 			} else {
 				expect(result.stderr).toBe('');
 			}
+		}, 15000);
+
+		it('should output JSON format when --output-format json is used', async () => {
+			const result = await CliTestUtil.runCommand([
+				'get-ip-details',
+				'8.8.8.8',
+				'--output-format',
+				'json',
+			]);
+
+			expect(result.exitCode).toBe(0);
+			// Validate JSON output
+			const cleanOutput = result.stdout
+				.split('\n')
+				.filter((line) => !line.match(/^\[\d{2}:\d{2}:\d{2}\]/))
+				.join('\n')
+				.trim();
+			const parsed = JSON.parse(cleanOutput);
+			expect(parsed).toHaveProperty('status', 'success');
+			expect(parsed).toHaveProperty('query', '8.8.8.8');
+		}, 15000);
+
+		it('should apply JQ filter correctly', async () => {
+			const result = await CliTestUtil.runCommand([
+				'get-ip-details',
+				'8.8.8.8',
+				'--jq',
+				'{ip: query, country: country}',
+				'--output-format',
+				'json',
+			]);
+
+			expect(result.exitCode).toBe(0);
+			const cleanOutput = result.stdout
+				.split('\n')
+				.filter((line) => !line.match(/^\[\d{2}:\d{2}:\d{2}\]/))
+				.join('\n')
+				.trim();
+			const parsed = JSON.parse(cleanOutput);
+			expect(parsed).toHaveProperty('ip', '8.8.8.8');
+			expect(parsed).toHaveProperty('country');
+			// Should NOT have other fields due to JQ filter
+			expect(parsed).not.toHaveProperty('city');
 		}, 15000);
 
 		it('should handle invalid IP format gracefully', async () => {
@@ -82,12 +125,10 @@ describe('IP Address CLI Commands', () => {
 			// We'll check both possibilities
 
 			if (result.exitCode === 0) {
-				// If it succeeds, validate the output format but with adjusted expectations
-				CliTestUtil.validateMarkdownOutput(result.stdout);
+				// If it succeeds, validate TOON output format
+				CliTestUtil.validateToonOutput(result.stdout);
 				CliTestUtil.validateOutputContains(result.stdout, [
-					'# IP Address Details: 192.168.1.1',
-					'- **IP Address**: 192.168.1.1',
-					// Don't expect specific fields that might be missing for private IPs
+					'query: 192.168.1.1',
 				]);
 			} else {
 				// If it fails with an error, check for appropriate error message
@@ -109,6 +150,8 @@ describe('IP Address CLI Commands', () => {
 			// Help output should contain information about the command
 			expect(result.stdout).toMatch(/Usage|Options|Description/i);
 			expect(result.stdout).toContain('get-ip-details');
+			// Should mention new options
+			expect(result.stdout).toMatch(/--jq|--output-format/);
 		}, 15000);
 
 		it('should handle unknown flags gracefully', async () => {
@@ -121,12 +164,12 @@ describe('IP Address CLI Commands', () => {
 			if (result.exitCode !== 0) {
 				expect(result.stderr).toMatch(/unknown option|invalid|error/i);
 			} else {
-				// If it succeeds, it should still produce valid output
-				CliTestUtil.validateMarkdownOutput(result.stdout);
+				// If it succeeds, it should still produce valid TOON output
+				CliTestUtil.validateToonOutput(result.stdout);
 				CliTestUtil.validateOutputContains(result.stdout, [
-					'# IP Address Details:',
-					'## Location Information',
-					'## Network Information',
+					'status:',
+					'query:',
+					'country:',
 				]);
 			}
 		}, 15000);
