@@ -80,7 +80,29 @@ function registerTools(server: McpServer) {
 
 	server.tool(
 		'ip_get_details',
-		`Retrieves detailed geolocation and network information for a public IP address (\`ipAddress\`). If no IP is provided, automatically uses the server's current public IP. Returns comprehensive location data including country, region, city, coordinates, timezone, and network details like ISP and organization. Use \`includeExtendedData\` to get additional information such as ASN, mobile/proxy detection (requires API token). **Note:** Cannot lookup private IPs (e.g., 192.168.x.x, 10.x.x.x). Powered by ip-api.com. Enable \`useHttps\` for secure connections (required for paid tier).`,
+		`Retrieve geolocation and network information for a public IP address. Returns TOON format by default (30-60% fewer tokens than JSON).
+
+**IMPORTANT - Cost Optimization:**
+- Use \`jq\` param to extract only needed fields. Unfiltered responses are expensive!
+- Example: \`jq: "{ip: query, country: country, city: city}"\` - extract specific fields
+- If unsure about available fields, first call WITHOUT jq filter to see all fields, then use jq in subsequent calls
+
+**Schema Discovery Pattern:**
+1. First call: \`ipAddress: "8.8.8.8"\` (no jq) - explore available fields
+2. Then use: \`jq: "{ip: query, location: {city: city, country: country}}"\` - extract only what you need
+
+**Output format:** TOON (default, token-efficient) or JSON (\`outputFormat: "json"\`)
+
+**Parameters:**
+- \`ipAddress\` - IP to lookup (omit for current device's public IP)
+- \`includeExtendedData\` - Include ASN, host, proxy detection (requires API token)
+- \`useHttps\` - Use HTTPS (default: true)
+- \`jq\` - JMESPath expression to filter response
+- \`outputFormat\` - "toon" (default) or "json"
+
+**JQ examples:** \`query\` (IP only), \`{ip: query, country: country}\`, \`{location: {lat: lat, lon: lon}}\`
+
+**Note:** Cannot lookup private IPs (192.168.x.x, 10.x.x.x). Powered by ip-api.com.`,
 		GetIpDetailsToolSchema.shape,
 		handleGetIpDetails,
 	);

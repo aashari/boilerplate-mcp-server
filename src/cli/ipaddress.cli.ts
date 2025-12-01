@@ -27,6 +27,15 @@ function register(program: Command) {
 			'--no-use-https', // commander creates a 'useHttps' boolean, defaulting to true
 			'Use HTTP instead of HTTPS for the API call.',
 		)
+		.option(
+			'--jq <expression>',
+			'JMESPath expression to filter/transform the response.',
+		)
+		.option(
+			'-o, --output-format <format>',
+			'Output format: "toon" (default, token-efficient) or "json".',
+			'toon',
+		)
 		.action(async (ipAddress, options) => {
 			const actionLogger = logger.forMethod('action:get-ip-details');
 			try {
@@ -40,6 +49,8 @@ function register(program: Command) {
 					ipAddress,
 					includeExtendedData: options.includeExtendedData || false,
 					useHttps: options.useHttps, // commander handles the default via --no-use-https
+					jq: options.jq,
+					outputFormat: options.outputFormat as 'toon' | 'json',
 				};
 
 				const result = await ipAddressController.get(args);
