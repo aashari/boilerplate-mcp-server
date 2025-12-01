@@ -9,7 +9,10 @@ A production-ready foundation for developing custom Model Context Protocol (MCP)
 
 - **Dual Transport Support**: STDIO and Streamable HTTP transports with automatic fallback
 - **5-Layer Architecture**: Clean separation between CLI, tools, controllers, services, and utilities
-- **Type Safety**: Full TypeScript implementation with Zod schema validation
+- **Type Safety**: Full TypeScript implementation with Zod v4 schema validation
+- **TOON Output Format**: Token-Oriented Object Notation for 30-60% fewer tokens than JSON
+- **JMESPath Filtering**: Extract only needed fields from responses to reduce token costs
+- **Modern SDK**: Uses MCP SDK v1.23.0 with `registerTool` API pattern
 - **Complete IP Address Example**: Tools, resources, and CLI commands for IP geolocation
 - **Comprehensive Testing**: Unit and integration tests with coverage reporting
 - **Production Tooling**: ESLint, Prettier, semantic-release, and MCP Inspector integration
@@ -43,6 +46,8 @@ npm run build
 npm run cli -- get-ip-details 8.8.8.8
 npm run cli -- get-ip-details              # Get your current IP
 npm run cli -- get-ip-details 1.1.1.1 --include-extended-data
+npm run cli -- get-ip-details 8.8.8.8 --jq "{ip: query, country: country}"  # JQ filter
+npm run cli -- get-ip-details 8.8.8.8 --output-format json                   # JSON output
 
 # 2. STDIO Transport - For AI assistant integration (Claude Desktop, Cursor)
 npm run mcp:stdio
@@ -68,6 +73,52 @@ npm run mcp:inspect                         # Auto-opens browser with debugging 
 - MCP Endpoint: `http://localhost:3000/mcp`
 - Health Check: `http://localhost:3000/` → Returns server version
 - Run with: `TRANSPORT_MODE=http node dist/index.js`
+
+## Output Formats
+
+### TOON Format (Default)
+
+TOON (Token-Oriented Object Notation) is a human-readable format optimized for LLMs, reducing token usage by 30-60% compared to JSON:
+
+```
+status: success
+query: 8.8.8.8
+country: United States
+city: Ashburn
+lat: 39.03
+lon: -77.5
+```
+
+### JSON Format
+
+Standard JSON output when `--output-format json` is specified:
+
+```json
+{
+  "status": "success",
+  "query": "8.8.8.8",
+  "country": "United States",
+  "city": "Ashburn"
+}
+```
+
+### JMESPath Filtering
+
+Use `--jq` to extract only needed fields, reducing token costs:
+
+```bash
+# Extract specific fields
+npm run cli -- get-ip-details 8.8.8.8 --jq "{ip: query, country: country}"
+
+# Output:
+# ip: 8.8.8.8
+# country: United States
+
+# Nested structure
+npm run cli -- get-ip-details 8.8.8.8 --jq "{location: {city: city, coords: {lat: lat, lon: lon}}}"
+```
+
+See [JMESPath documentation](https://jmespath.org) for more filter examples.
 
 ## Architecture Overview
 
@@ -99,6 +150,8 @@ src/
 │   ├── config.util.ts      # Environment configuration
 │   ├── constants.util.ts   # Version and package constants
 │   ├── formatter.util.ts   # Markdown formatting
+│   ├── toon.util.ts        # TOON format encoding
+│   ├── jq.util.ts          # JMESPath filtering
 │   └── transport.util.ts   # HTTP transport utilities
 └── index.ts                # Server entry point (dual transport)
 ```
@@ -147,11 +200,13 @@ The boilerplate follows a clean, layered architecture that promotes maintainabil
 ### 6. Utils Layer (`src/utils/`)
 
 - **Purpose**: Shared functionality across all layers
-- **Key Components**: 
+- **Key Components**:
   - `logger.util.ts`: Contextual logging (file:method context)
   - `error.util.ts`: MCP-specific error formatting
   - `transport.util.ts`: HTTP/API utilities with retry logic
   - `config.util.ts`: Environment configuration management
+  - `toon.util.ts`: TOON format encoding (token-efficient output)
+  - `jq.util.ts`: JMESPath filtering for response transformation
 
 ## Developer Guide
 
@@ -396,16 +451,20 @@ async function handleGetData(args: Record<string, unknown>) {
 	}
 }
 
-// Registration function following the pattern used by existing tools
+// Registration function using the modern registerTool API (SDK v1.22.0+)
 function registerTools(server: McpServer) {
 	const registerLogger = logger.forMethod('registerTools');
 	registerLogger.debug('Registering example tools...');
 
-	server.tool(
+	// SDK best practices: 'title' for UI display name, 'description' for detailed info
+	server.registerTool(
 		'example_get_data',
-		`Gets data from the Example API with optional parameter.
+		{
+			title: 'Get Example Data',  // Display name for UI (e.g., 'Get Example Data')
+			description: `Gets data from the Example API with optional parameter.
 Use this tool to fetch example data. Returns formatted data as Markdown.`,
-		GetDataSchema.shape,
+			inputSchema: GetDataSchema,
+		},
 		handleGetData
 	);
 
@@ -494,26 +553,31 @@ The boilerplate includes a complete IP address geolocation example demonstrating
 
 **CLI Commands:**
 ```bash
-npm run cli -- get-ip-details                           # Get current public IP
-npm run cli -- get-ip-details 8.8.8.8                  # Get details for specific IP
+npm run cli -- get-ip-details                           # Get current public IP (TOON format)
+npm run cli -- get-ip-details 8.8.8.8                   # Get details for specific IP
 npm run cli -- get-ip-details 1.1.1.1 --include-extended-data   # With extended data
-npm run cli -- get-ip-details 8.8.8.8 --no-use-https   # Force HTTP (for free tier)
+npm run cli -- get-ip-details 8.8.8.8 --no-use-https    # Force HTTP (for free tier)
+npm run cli -- get-ip-details 8.8.8.8 --output-format json      # JSON output
+npm run cli -- get-ip-details 8.8.8.8 --jq "{ip: query, country: country}"  # Filtered output
 ```
 
 **MCP Tools:**
 - `ip_get_details` - IP geolocation lookup for AI assistants
+  - Supports `outputFormat`: "toon" (default) or "json"
+  - Supports `jq`: JMESPath expression for filtering
 
 **MCP Resources:**
-- `ip://` - Current IP details  
+- `ip://` - Current IP details
 - `ip://8.8.8.8` - Specific IP details
 
 ### Features Demonstrated
 
+- **TOON Output**: Token-efficient format (30-60% fewer tokens than JSON)
+- **JMESPath Filtering**: Extract only needed fields to reduce costs
 - **Fallback Logic**: HTTPS → HTTP fallback for free tier users
 - **Environment Detection**: Different behavior in test vs production
 - **API Token Support**: Optional token for extended data (ASN, mobile detection, etc.)
 - **Error Handling**: Structured errors for private/reserved IP addresses
-- **Response Formatting**: Clean Markdown output with geolocation data
 
 ### Configuration Options
 

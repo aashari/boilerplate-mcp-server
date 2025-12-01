@@ -66,21 +66,9 @@ async function handleGetIpDetails(args: Record<string, unknown>) {
 }
 
 /**
- * @function registerTools
- * @description Registers the IP address lookup tool ('ip_get_details') with the MCP server.
- *
- * @param {McpServer} server - The MCP server instance.
+ * Tool description for ip_get_details
  */
-function registerTools(server: McpServer) {
-	const methodLogger = Logger.forContext(
-		'tools/ipaddress.tool.ts',
-		'registerTools',
-	);
-	methodLogger.debug(`Registering IP address tools...`);
-
-	server.tool(
-		'ip_get_details',
-		`Retrieve geolocation and network information for a public IP address. Returns TOON format by default (30-60% fewer tokens than JSON).
+const IP_GET_DETAILS_DESCRIPTION = `Retrieve geolocation and network information for a public IP address. Returns TOON format by default (30-60% fewer tokens than JSON).
 
 **IMPORTANT - Cost Optimization:**
 - Use \`jq\` param to extract only needed fields. Unfiltered responses are expensive!
@@ -102,8 +90,31 @@ function registerTools(server: McpServer) {
 
 **JQ examples:** \`query\` (IP only), \`{ip: query, country: country}\`, \`{location: {lat: lat, lon: lon}}\`
 
-**Note:** Cannot lookup private IPs (192.168.x.x, 10.x.x.x). Powered by ip-api.com.`,
-		GetIpDetailsToolSchema.shape,
+**Note:** Cannot lookup private IPs (192.168.x.x, 10.x.x.x). Powered by ip-api.com.`;
+
+/**
+ * @function registerTools
+ * @description Registers the IP address lookup tool ('ip_get_details') with the MCP server.
+ *              Uses the modern registerTool API (SDK v1.22.0+) instead of deprecated tool() method.
+ *
+ * @param {McpServer} server - The MCP server instance.
+ */
+function registerTools(server: McpServer) {
+	const methodLogger = Logger.forContext(
+		'tools/ipaddress.tool.ts',
+		'registerTools',
+	);
+	methodLogger.debug(`Registering IP address tools...`);
+
+	// Use the modern registerTool API (SDK v1.22.0+)
+	// Following SDK best practices: title for UI display, description for details
+	server.registerTool(
+		'ip_get_details',
+		{
+			title: 'IP Address Lookup',
+			description: IP_GET_DETAILS_DESCRIPTION,
+			inputSchema: GetIpDetailsToolSchema,
+		},
 		handleGetIpDetails,
 	);
 
