@@ -128,10 +128,7 @@ async function get(
 					...serviceOptions,
 					useHttps: false,
 				});
-				methodLogger.debug(
-					`Got the response from HTTP fallback`,
-					data,
-				);
+				methodLogger.debug(`Got the response from HTTP fallback`, data);
 			} else {
 				// For other errors, rethrow
 				throw error;

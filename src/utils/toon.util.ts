@@ -62,7 +62,9 @@ export async function toToonOrJson(
 	try {
 		const encode = await loadToonEncoder();
 		if (!encode) {
-			methodLogger.debug('TOON encoder not available, using JSON fallback');
+			methodLogger.debug(
+				'TOON encoder not available, using JSON fallback',
+			);
 			return jsonFallback;
 		}
 

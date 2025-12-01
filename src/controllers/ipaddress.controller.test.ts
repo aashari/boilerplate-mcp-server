@@ -9,7 +9,9 @@ describe('IP Address Controller', () => {
 
 			// Output can be TOON (production) or JSON (test fallback)
 			// Check for either format
-			const isToon = result.content.includes('status:') && !result.content.startsWith('{');
+			const isToon =
+				result.content.includes('status:') &&
+				!result.content.startsWith('{');
 			const isJson = result.content.startsWith('{');
 
 			expect(isToon || isJson).toBe(true);
@@ -30,7 +32,9 @@ describe('IP Address Controller', () => {
 
 		it('should return JSON format when outputFormat is json', async () => {
 			// Call the function with JSON output format
-			const result = await ipAddressController.get({ outputFormat: 'json' });
+			const result = await ipAddressController.get({
+				outputFormat: 'json',
+			});
 
 			// Verify the result is valid JSON
 			const parsed = JSON.parse(result.content);
