@@ -1,3 +1,15 @@
+# [1.16.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.15.0...v1.16.0) (2025-12-01)
+
+
+### Bug Fixes
+
+* regenerate package-lock.json to fix CI dependency resolution ([a0225a8](https://github.com/aashari/boilerplate-mcp-server/commit/a0225a8f9bb0bb5b27a436099d0b131fa47e8cbc))
+
+
+### Features
+
+* modernize SDK usage and update dependencies ([#127](https://github.com/aashari/boilerplate-mcp-server/issues/127)) ([a36c9f6](https://github.com/aashari/boilerplate-mcp-server/commit/a36c9f644d842e9c5360d4ed2f207ada18d97ebd))
+
 # [1.15.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.14.0...v1.15.0) (2025-12-01)
 
 
