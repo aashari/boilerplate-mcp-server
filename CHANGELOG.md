@@ -1,3 +1,15 @@
+# [1.15.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.14.0...v1.15.0) (2025-12-01)
+
+
+### Bug Fixes
+
+* update tests for TOON output format ([6054be3](https://github.com/aashari/boilerplate-mcp-server/commit/6054be313fd54c6678b39da214c13e17b04ec4a6))
+
+
+### Features
+
+* add TOON output format with JMESPath filtering support ([#126](https://github.com/aashari/boilerplate-mcp-server/issues/126)) ([2b3d8d8](https://github.com/aashari/boilerplate-mcp-server/commit/2b3d8d8a6811a1296475b6971d840b9392ceff08))
+
 # [1.14.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.13.5...v1.14.0) (2025-09-09)
 
 
