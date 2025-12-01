@@ -1,11 +1,23 @@
 import { Logger } from '../utils/logger.util.js';
 import ipApiService from '../services/vendor.ip-api.com.service.js';
-import { formatIpDetails } from './ipaddress.formatter.js';
 import { handleControllerError } from '../utils/error-handler.util.js';
-import { ControllerResponse } from '../types/common.types.js';
 import { config } from '../utils/config.util.js';
 import { McpError } from '../utils/error.util.js';
 import { buildErrorContext } from '../utils/error-handler.util.js';
+import { IPDetail } from '../services/vendor.ip-api.com.types.js';
+import { applyJqFilter, toOutputString } from '../utils/jq.util.js';
+
+/**
+ * Output format type
+ */
+type OutputFormat = 'toon' | 'json';
+
+/**
+ * Controller response type
+ */
+interface ControllerResponse {
+	content: string;
+}
 
 /**
  * @namespace IpAddressController
@@ -23,7 +35,9 @@ import { buildErrorContext } from '../utils/error-handler.util.js';
  * @param {string} [args.ipAddress] - Optional IP address to look up. If omitted, the service will fetch the current device's public IP.
  * @param {boolean} [args.includeExtendedData=false] - Whether to include extended data fields requiring an API token
  * @param {boolean} [args.useHttps=true] - Whether to use HTTPS for the API request
- * @returns {Promise<ControllerResponse>} A promise that resolves to the standard controller response containing the formatted IP details in Markdown.
+ * @param {string} [args.jq] - JMESPath expression to filter the response
+ * @param {OutputFormat} [args.outputFormat] - Output format (toon or json)
+ * @returns {Promise<ControllerResponse>} A promise that resolves to the standard controller response containing the formatted IP details.
  * @throws {McpError} Throws an McpError (handled by `handleControllerError`) if the service call fails or returns an error.
  */
 async function get(
@@ -31,6 +45,8 @@ async function get(
 		ipAddress?: string;
 		includeExtendedData?: boolean;
 		useHttps?: boolean;
+		jq?: string;
+		outputFormat?: OutputFormat;
 	} = {},
 ): Promise<ControllerResponse> {
 	const methodLogger = Logger.forContext(
@@ -92,12 +108,11 @@ async function get(
 			},
 		);
 
+		let data: IPDetail;
 		try {
 			// Call the service with ipAddress and the mapped serviceOptions
-			const data = await ipApiService.get(args.ipAddress, serviceOptions);
+			data = await ipApiService.get(args.ipAddress, serviceOptions);
 			methodLogger.debug(`Got the response from the service`, data);
-			const formattedContent = formatIpDetails(data);
-			return { content: formattedContent };
 		} catch (error) {
 			// If HTTPS fails with permission/SSL error and useHttps was true, try again with HTTP
 			if (
@@ -109,22 +124,29 @@ async function get(
 			) {
 				methodLogger.warn('HTTPS request failed, falling back to HTTP');
 				// Try again with HTTP
-				const httpData = await ipApiService.get(args.ipAddress, {
+				data = await ipApiService.get(args.ipAddress, {
 					...serviceOptions,
 					useHttps: false,
 				});
-
 				methodLogger.debug(
 					`Got the response from HTTP fallback`,
-					httpData,
+					data,
 				);
-				const formattedContent = formatIpDetails(httpData);
-				return { content: formattedContent };
+			} else {
+				// For other errors, rethrow
+				throw error;
 			}
-
-			// For other errors, rethrow
-			throw error;
 		}
+
+		// Apply JQ filter if provided
+		const filteredData = applyJqFilter(data, args.jq);
+
+		// Determine output format (default to TOON)
+		const useToon = args.outputFormat !== 'json';
+
+		// Format the output
+		const content = await toOutputString(filteredData, useToon);
+		return { content };
 	} catch (error) {
 		throw handleControllerError(
 			error,
