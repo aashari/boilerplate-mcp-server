@@ -19,11 +19,6 @@ const GetIpDetailsToolSchema = z.object({
 });
 
 /**
- * TypeScript type inferred from the combined tool arguments schema.
- */
-// type GetIpDetailsToolArgsType = z.infer<typeof GetIpDetailsToolSchema>;
-
-/**
  * @function handleGetIpDetails
  * @description MCP Tool handler to retrieve details for a given IP address (or the current IP).
  *              It calls the ipAddressController to fetch the data and formats the response for the MCP.

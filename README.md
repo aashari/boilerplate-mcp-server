@@ -179,9 +179,9 @@ The boilerplate follows a clean, layered architecture that promotes maintainabil
 ### 3. Resources Layer (`src/resources/`)
 
 - **Purpose**: MCP resources providing contextual data accessible via URIs
-- **Implementation**: Resource handlers that respond to URI-based requests
-- **Example**: `ip://8.8.8.8` resource providing IP geolocation data
-- **Pattern**: Register URI patterns → Parse requests → Return formatted content
+- **Implementation**: Uses `registerResource` API with `ResourceTemplate` for parameterized URIs
+- **Example**: `ip://{ipAddress}` resource template providing IP geolocation data
+- **Pattern**: Register URI template → Extract variables → Return formatted content
 
 ### 4. Controllers Layer (`src/controllers/`)
 
@@ -543,6 +543,63 @@ import exampleTools from './tools/example.tool.js';
 exampleTools.registerTools(serverInstance);
 ```
 
+### 6. Add MCP Resource (Optional)
+
+Create a resource in `src/resources/` using the modern `registerResource` API:
+
+```typescript
+// src/resources/example.resource.ts
+import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Logger } from '../utils/logger.util.js';
+import exampleController from '../controllers/example.controller.js';
+import { formatErrorForMcpResource } from '../utils/error.util.js';
+
+const logger = Logger.forContext('resources/example.resource.ts');
+
+function registerResources(server: McpServer) {
+	const registerLogger = logger.forMethod('registerResources');
+	registerLogger.debug('Registering example resources...');
+
+	// Use registerResource with ResourceTemplate for parameterized URIs (SDK v1.22.0+)
+	server.registerResource(
+		'example-data',
+		new ResourceTemplate('example://{param}', { list: undefined }),
+		{
+			title: 'Example Data',  // Display name for UI
+			description: 'Retrieve example data by parameter'
+		},
+		async (uri, variables) => {
+			const methodLogger = logger.forMethod('exampleResource');
+			try {
+				// Extract parameter from template variables
+				const param = variables.param as string | undefined;
+
+				methodLogger.debug('Example resource called', { uri: uri.href, param });
+
+				const result = await exampleController.getData({ param });
+
+				return {
+					contents: [
+						{
+							uri: uri.href,
+							text: result.content,
+							mimeType: 'text/markdown'
+						}
+					]
+				};
+			} catch (error) {
+				methodLogger.error('Resource error', error);
+				return formatErrorForMcpResource(error, uri.href);
+			}
+		}
+	);
+
+	registerLogger.debug('Example resources registered successfully');
+}
+
+export default { registerResources };
+```
+
 </details>
 
 ## IP Address Example Implementation
@@ -567,8 +624,7 @@ npm run cli -- get-ip-details 8.8.8.8 --jq "{ip: query, country: country}"  # Fi
   - Supports `jq`: JMESPath expression for filtering
 
 **MCP Resources:**
-- `ip://` - Current IP details
-- `ip://8.8.8.8` - Specific IP details
+- `ip://{ipAddress}` - IP details resource template (e.g., `ip://8.8.8.8`)
 
 ### Features Demonstrated
 
@@ -656,9 +712,10 @@ npm run test:cli           # CLI-specific tests only
 ## Resources & Documentation
 
 ### MCP Protocol Resources
-- [MCP Specification](https://modelcontextprotocol.io/specification/2025-06-18)
-- [MCP SDK Documentation](https://github.com/modelcontextprotocol/sdk)
+- [MCP Specification](https://modelcontextprotocol.io/specification) - Latest protocol specification
+- [MCP SDK Documentation](https://github.com/modelcontextprotocol/typescript-sdk) - TypeScript SDK v1.23.0+
 - [MCP Inspector](https://github.com/modelcontextprotocol/inspector) - Visual debugging tool
+- [MCP Concepts](https://modelcontextprotocol.io/docs/concepts) - Tools, resources, transports
 
 ### Implementation References
 - [Anthropic MCP Announcement](https://www.anthropic.com/news/model-context-protocol)

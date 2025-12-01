@@ -1,4 +1,7 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import {
+	McpServer,
+	ResourceTemplate,
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
 import ipaddressController from '../controllers/ipaddress.controller.js';
 import { formatErrorForMcpResource } from '../utils/error.util.js';
@@ -7,6 +10,7 @@ const logger = Logger.forContext('resources/ipaddress.resource.ts');
 
 /**
  * Register an IP address lookup resource with the MCP server
+ * Uses the modern registerResource API (SDK v1.22.0+) with ResourceTemplate
  *
  * @param server The MCP server instance
  */
@@ -14,21 +18,26 @@ function registerResources(server: McpServer) {
 	const registerLogger = logger.forMethod('registerResources');
 	registerLogger.debug('Registering IP lookup resources...');
 
-	// Register the IP lookup resource
-	server.resource(
+	// Register the IP lookup resource using modern registerResource API
+	// ResourceTemplate enables parameterized URIs with {ipAddress} placeholder
+	server.registerResource(
 		'ip-lookup',
-		'Lookup IP address details, returning formatted text result',
-		async (uri: URL) => {
+		new ResourceTemplate('ip://{ipAddress}', { list: undefined }),
+		{
+			title: 'IP Address Lookup', // Display name for UI
+			description:
+				'Retrieve geolocation and network information for a public IP address',
+		},
+		async (uri, variables) => {
 			const methodLogger = logger.forMethod('ipLookupResource');
 			try {
-				// Extract the IP address from the request path (if present)
-				// Format of the URI would be ip://<ip-address> or ip://
-				methodLogger.debug('IP lookup resource called', {
-					uri: uri.toString(),
-				});
+				// Extract ipAddress from template variables
+				const ipAddress = variables.ipAddress as string | undefined;
 
-				// Get everything after the ip:// protocol
-				const ipAddress = uri.toString().replace(/^ip:\/\//, '');
+				methodLogger.debug('IP lookup resource called', {
+					uri: uri.href,
+					ipAddress,
+				});
 
 				// Call the controller to get the IP details
 				const result = await ipaddressController.get({
@@ -41,16 +50,15 @@ function registerResources(server: McpServer) {
 				return {
 					contents: [
 						{
-							uri: uri.toString(),
+							uri: uri.href,
 							text: result.content,
 							mimeType: 'text/markdown',
-							description: `IP Details for ${ipAddress || 'current'}`,
 						},
 					],
 				};
 			} catch (error) {
 				methodLogger.error('Resource error', error);
-				return formatErrorForMcpResource(error, uri.toString());
+				return formatErrorForMcpResource(error, uri.href);
 			}
 		},
 	);

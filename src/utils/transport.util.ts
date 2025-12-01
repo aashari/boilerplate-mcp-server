@@ -210,7 +210,6 @@ export async function fetchApi<T>(
 		try {
 			const responseData = await response.json();
 			methodLogger.debug('Response body successfully parsed as JSON.');
-			// methodLogger.debug('Response Data:', responseData); // Uncomment for full response logging
 			return responseData as T;
 		} catch (parseError) {
 			methodLogger.error(
