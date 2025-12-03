@@ -19,15 +19,23 @@
 		"clean": "rm -rf dist coverage",
 		"test": "jest",
 		"test:coverage": "jest --coverage",
+		"test:cli": "jest src/cli/.*\\.cli\\.test\\.ts --runInBand --testTimeout=60000",
 		"lint": "eslint src --ext .ts --config eslint.config.mjs",
-		"update:deps": "npx npm-check-updates -u && npm install --legacy-peer-deps",
 		"format": "prettier --write 'src/**/*.ts' 'scripts/**/*.js'",
-		"cli": "npm run build && node dist/index.js",
-		"mcp:stdio": "npm run build && TRANSPORT_MODE=stdio node dist/index.js",
-		"mcp:http": "npm run build && TRANSPORT_MODE=http node dist/index.js",
-		"mcp:inspect": "npm run build && (TRANSPORT_MODE=http node dist/index.js &) && sleep 2 && npx @modelcontextprotocol/inspector http://localhost:3000/mcp",
+		"publish:npm": "npm publish",
+		"update:check": "npx npm-check-updates",
+		"update:deps": "npx npm-check-updates -u && npm install --legacy-peer-deps",
+		"update:version": "node scripts/update-version.js",
+		"mcp:stdio": "TRANSPORT_MODE=stdio npm run build && node dist/index.js",
+		"mcp:http": "TRANSPORT_MODE=http npm run build && node dist/index.js",
+		"mcp:inspect": "TRANSPORT_MODE=http npm run build && (node dist/index.js &) && sleep 2 && npx @modelcontextprotocol/inspector http://localhost:3000/mcp",
 		"dev:stdio": "npm run build && npx @modelcontextprotocol/inspector -e TRANSPORT_MODE=stdio -e DEBUG=true node dist/index.js",
-		"dev:http": "npm run build && DEBUG=true TRANSPORT_MODE=http node dist/index.js"
+		"dev:http": "DEBUG=true TRANSPORT_MODE=http npm run build && node dist/index.js",
+		"dev:server": "DEBUG=true npm run build && npx @modelcontextprotocol/inspector -e DEBUG=true node dist/index.js",
+		"dev:cli": "DEBUG=true npm run build && DEBUG=true node dist/index.js",
+		"start:server": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js",
+		"start:cli": "npm run build && node dist/index.js",
+		"cli": "npm run build && node dist/index.js"
 	},
 	"keywords": [
 		"mcp",
@@ -66,11 +74,15 @@
 		"@typescript-eslint/parser": "^8.48.0",
 		"eslint": "^9.39.1",
 		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-filenames": "^1.3.2",
 		"eslint-plugin-prettier": "^5.5.4",
 		"jest": "^30.2.0",
+		"nodemon": "^3.1.11",
+		"npm-check-updates": "^19.1.2",
 		"prettier": "^3.7.3",
 		"semantic-release": "^25.0.2",
 		"ts-jest": "^29.4.5",
+		"ts-node": "^10.9.2",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.48.0"
 	},
@@ -100,7 +112,17 @@
 		"collectCoverageFrom": [
 			"src/**/*.ts",
 			"!src/**/*.test.ts",
-			"!src/utils/jest.setup.ts"
+			"!src/**/*.spec.ts"
+		],
+		"coveragePathIgnorePatterns": [
+			"/node_modules/",
+			"/dist/",
+			"/coverage/"
+		],
+		"coverageReporters": [
+			"text",
+			"lcov",
+			"json-summary"
 		],
 		"transform": {
 			"^.+\\.tsx?$": [
@@ -115,6 +137,14 @@
 		},
 		"extensionsToTreatAsEsm": [
 			".ts"
+		],
+		"moduleFileExtensions": [
+			"ts",
+			"tsx",
+			"js",
+			"jsx",
+			"json",
+			"node"
 		]
 	}
 }

@@ -36,14 +36,17 @@ describe('vendor.ip-api.com.service', () => {
 				// Call the service with a known public IP
 				const result = await ipApiService.get('8.8.8.8');
 
-				// Verify it returns the expected data format
+				// Verify it returns the expected data format (ServiceResponse wrapper)
 				expect(result).toBeDefined();
-				expect(result.status).toBe('success');
-				expect(result.query).toBe('8.8.8.8');
-				expect(result.country).toBeDefined();
-				expect(result.countryCode).toBeDefined();
+				expect(result.data).toBeDefined();
+				expect(result.data.status).toBe('success');
+				expect(result.data.query).toBe('8.8.8.8');
+				expect(result.data.country).toBeDefined();
+				expect(result.data.countryCode).toBeDefined();
 				// Google DNS should have Google in its organization or ISP
-				expect(result.org || result.isp).toMatch(/Google/i);
+				expect(result.data.org || result.data.isp).toMatch(/Google/i);
+				// Verify rawResponsePath is present
+				expect(result.rawResponsePath).toBeDefined();
 			} catch (error) {
 				skipIfRateLimited(error);
 			}

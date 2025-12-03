@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
 import { IpAddressToolArgs } from './ipaddress.types.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
+import { truncateForAI } from '../utils/formatter.util.js';
 import { z } from 'zod';
 
 import ipAddressController from '../controllers/ipaddress.controller.js';
@@ -42,12 +43,12 @@ async function handleGetIpDetails(args: Record<string, unknown>) {
 		const result = await ipAddressController.get(args);
 		methodLogger.debug(`Got the response from the controller`, result);
 
-		// Format the response for the MCP tool
+		// Format the response for the MCP tool, applying truncation for large responses
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content,
+					text: truncateForAI(result.content, result.rawResponsePath),
 				},
 			],
 		};

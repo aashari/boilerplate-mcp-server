@@ -6,18 +6,12 @@ import { McpError } from '../utils/error.util.js';
 import { buildErrorContext } from '../utils/error-handler.util.js';
 import { IPDetail } from '../services/vendor.ip-api.com.types.js';
 import { applyJqFilter, toOutputString } from '../utils/jq.util.js';
+import { ControllerResponse } from '../types/common.types.js';
 
 /**
  * Output format type
  */
 type OutputFormat = 'toon' | 'json';
-
-/**
- * Controller response type
- */
-interface ControllerResponse {
-	content: string;
-}
 
 /**
  * @namespace IpAddressController
@@ -109,9 +103,15 @@ async function get(
 		);
 
 		let data: IPDetail;
+		let rawResponsePath: string | null = null;
 		try {
 			// Call the service with ipAddress and the mapped serviceOptions
-			data = await ipApiService.get(args.ipAddress, serviceOptions);
+			const response = await ipApiService.get(
+				args.ipAddress,
+				serviceOptions,
+			);
+			data = response.data;
+			rawResponsePath = response.rawResponsePath;
 			methodLogger.debug(`Got the response from the service`, data);
 		} catch (error) {
 			// If HTTPS fails with permission/SSL error and useHttps was true, try again with HTTP
@@ -124,10 +124,15 @@ async function get(
 			) {
 				methodLogger.warn('HTTPS request failed, falling back to HTTP');
 				// Try again with HTTP
-				data = await ipApiService.get(args.ipAddress, {
-					...serviceOptions,
-					useHttps: false,
-				});
+				const fallbackResponse = await ipApiService.get(
+					args.ipAddress,
+					{
+						...serviceOptions,
+						useHttps: false,
+					},
+				);
+				data = fallbackResponse.data;
+				rawResponsePath = fallbackResponse.rawResponsePath;
 				methodLogger.debug(`Got the response from HTTP fallback`, data);
 			} else {
 				// For other errors, rethrow
@@ -143,7 +148,7 @@ async function get(
 
 		// Format the output
 		const content = await toOutputString(filteredData, useToon);
-		return { content };
+		return { content, rawResponsePath };
 	} catch (error) {
 		throw handleControllerError(
 			error,

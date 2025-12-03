@@ -6,6 +6,7 @@ import {
 	createUnexpectedError,
 	McpError,
 } from './error.util.js';
+import { saveRawResponse } from './response.util.js';
 
 // Create a contextualized logger for this file
 const transportLogger = Logger.forContext('utils/transport.util.ts');
@@ -28,6 +29,14 @@ export interface RequestOptions {
 	method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
 	headers?: Record<string, string>;
 	body?: unknown;
+}
+
+/**
+ * Transport response wrapper that includes the data and the path to the raw response file
+ */
+export interface TransportResponse<T> {
+	data: T;
+	rawResponsePath: string | null;
 }
 
 /**
@@ -64,7 +73,7 @@ export function getIpApiCredentials(): IpApiCredentials {
  * @param options.useHttps - Use HTTPS (requires paid plan for ip-api.com). Defaults to false.
  * @param options.fields - Specific fields to request from ip-api.com.
  * @param options.lang - Language code for response data.
- * @returns The response data parsed as type T.
+ * @returns Transport response with data and raw response path.
  * @throws {McpError} If the request fails, including network errors, API errors, or parsing issues.
  */
 export async function fetchIpApi<T>(
@@ -74,7 +83,7 @@ export async function fetchIpApi<T>(
 		fields?: string[];
 		lang?: string;
 	} = {},
-): Promise<T> {
+): Promise<TransportResponse<T>> {
 	const methodLogger = Logger.forContext(
 		'utils/transport.util.ts',
 		'fetchIpApi',
@@ -134,13 +143,13 @@ export async function fetchIpApi<T>(
  *
  * @param url The full URL to fetch data from.
  * @param options Request options including method, headers, and body.
- * @returns The response data parsed as type T.
+ * @returns Transport response with data and raw response path.
  * @throws {McpError} If the request fails, including network errors, non-OK HTTP status, or JSON parsing issues.
  */
 export async function fetchApi<T>(
 	url: string,
 	options: RequestOptions = {},
-): Promise<T> {
+): Promise<TransportResponse<T>> {
 	const methodLogger = Logger.forContext(
 		'utils/transport.util.ts',
 		'fetchApi',
@@ -210,7 +219,18 @@ export async function fetchApi<T>(
 		try {
 			const responseData = await response.json();
 			methodLogger.debug('Response body successfully parsed as JSON.');
-			return responseData as T;
+
+			// Save raw response to file and capture the path
+			const rawResponsePath = saveRawResponse(
+				url,
+				requestOptions.method || 'GET',
+				options.body,
+				responseData,
+				response.status,
+				parseFloat(duration),
+			);
+
+			return { data: responseData as T, rawResponsePath };
 		} catch (parseError) {
 			methodLogger.error(
 				'Failed to parse API response JSON:',

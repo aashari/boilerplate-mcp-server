@@ -12,6 +12,14 @@ import {
 } from '../utils/error.util.js';
 import { fetchIpApi } from '../utils/transport.util.js';
 
+/**
+ * Service response wrapper that includes the data and the path to the raw response file
+ */
+export interface ServiceResponse<T> {
+	data: T;
+	rawResponsePath: string | null;
+}
+
 // Create a contextualized logger for this file
 const serviceLogger = Logger.forContext(
 	'services/vendor.ip-api.com.service.ts',
@@ -34,7 +42,7 @@ serviceLogger.debug('IP API service initialized');
  * @memberof VendorIpApiService
  * @param {string} [ipAddress] - Optional IP address to look up. If omitted, fetches details for the current device's public IP.
  * @param {IPApiRequestOptions} [options={}] - Optional request options for the ip-api.com service, such as `useHttps`, `fields`, and `lang`.
- * @returns {Promise<IPDetail>} A promise that resolves to the detailed IP information if the API call is successful.
+ * @returns {Promise<ServiceResponse<IPDetail>>} A promise that resolves to the detailed IP information and raw response path if the API call is successful.
  * @throws {McpError} Throws an `McpError` (specifically `ApiError` or `UnexpectedError`) if:
  *  - The `fetchIpApi` call fails (network error, non-2xx response).
  *  - The ip-api.com response status is not 'success'.
@@ -48,7 +56,7 @@ serviceLogger.debug('IP API service initialized');
 async function get(
 	ipAddress?: string,
 	options: IPApiRequestOptions = {},
-): Promise<IPDetail> {
+): Promise<ServiceResponse<IPDetail>> {
 	const methodLogger = Logger.forContext(
 		'services/vendor.ip-api.com.service.ts',
 		'get',
@@ -58,7 +66,7 @@ async function get(
 	try {
 		// Make the API call with correctly typed response
 		// Use a more specific type here since we know the API returns at least status + potential message
-		const rawData = await fetchIpApi<{
+		const response = await fetchIpApi<{
 			status: string;
 			message?: string;
 			[key: string]: unknown;
@@ -67,6 +75,9 @@ async function get(
 			fields: options.fields,
 			lang: options.lang,
 		});
+
+		// Extract data and rawResponsePath from TransportResponse
+		const { data: rawData, rawResponsePath } = response;
 
 		// First check API-level success/failure before Zod validation
 		// This avoids unnecessary validation errors for known API errors
@@ -100,7 +111,7 @@ async function get(
 		methodLogger.debug(
 			`Received and validated successful data from IP API`,
 		);
-		return validatedData;
+		return { data: validatedData, rawResponsePath };
 	} catch (error) {
 		methodLogger.error(`Service error fetching IP data`, error);
 

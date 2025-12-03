@@ -76,3 +76,43 @@ export async function toToonOrJson(
 		return jsonFallback;
 	}
 }
+
+/**
+ * Synchronous TOON conversion with JSON fallback.
+ *
+ * Uses cached encoder if available, otherwise returns JSON fallback.
+ * Prefer toToonOrJson for first-time conversion.
+ *
+ * @param data - The data to convert
+ * @param jsonFallback - The JSON string to return if TOON is unavailable
+ * @returns TOON formatted string, or JSON fallback
+ */
+export function toToonOrJsonSync(data: unknown, jsonFallback: string): string {
+	const methodLogger = logger.forMethod('toToonOrJsonSync');
+
+	if (!toonEncode) {
+		methodLogger.debug('TOON encoder not loaded, using JSON fallback');
+		return jsonFallback;
+	}
+
+	try {
+		const toonResult = toonEncode(data, { indent: 2 });
+		methodLogger.debug('Successfully converted to TOON format');
+		return toonResult;
+	} catch (error) {
+		methodLogger.error(
+			'TOON conversion failed, using JSON fallback',
+			error,
+		);
+		return jsonFallback;
+	}
+}
+
+/**
+ * Pre-load the TOON encoder for synchronous usage later.
+ * Call this during server initialization.
+ */
+export async function preloadToonEncoder(): Promise<boolean> {
+	const encode = await loadToonEncoder();
+	return encode !== null;
+}
