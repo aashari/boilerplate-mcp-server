@@ -1,3 +1,15 @@
+# [1.17.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.16.1...v1.17.0) (2025-12-03)
+
+
+### Bug Fixes
+
+* regenerate package-lock.json to sync with package.json ([aeb3d63](https://github.com/aashari/boilerplate-mcp-server/commit/aeb3d63234a2deaa1257f17a3db6a6538d5345b1))
+
+
+### Features
+
+* add raw response logging with truncation for large API responses ([3ed7b19](https://github.com/aashari/boilerplate-mcp-server/commit/3ed7b191fc51ff2562f9f5ad2d6dc46ff0a22714))
+
 ## [1.16.1](https://github.com/aashari/boilerplate-mcp-server/compare/v1.16.0...v1.16.1) (2025-12-01)
 
 
