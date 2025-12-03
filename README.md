@@ -8,10 +8,11 @@ A production-ready foundation for developing custom Model Context Protocol (MCP)
 ## Features
 
 - **Dual Transport Support**: STDIO and Streamable HTTP transports with automatic fallback
-- **5-Layer Architecture**: Clean separation between CLI, tools, controllers, services, and utilities
-- **Type Safety**: Full TypeScript implementation with Zod v4 schema validation
+- **Layered Architecture**: Clean separation between CLI, tools, resources, controllers, services, and utilities
+- **Type Safety**: Full TypeScript implementation with Zod v4.1.13 schema validation
 - **TOON Output Format**: Token-Oriented Object Notation for 30-60% fewer tokens than JSON
 - **JMESPath Filtering**: Extract only needed fields from responses to reduce token costs
+- **Raw Response Logging**: Automatic logging of large API responses to `/tmp/mcp/<project>/` with truncation guidance
 - **Modern SDK**: Uses MCP SDK v1.23.0 with `registerTool` API pattern
 - **Complete IP Address Example**: Tools, resources, and CLI commands for IP geolocation
 - **Comprehensive Testing**: Unit and integration tests with coverage reporting
@@ -44,10 +45,10 @@ npm run build
 
 # 1. CLI Mode - Execute commands directly
 npm run cli -- get-ip-details 8.8.8.8
-npm run cli -- get-ip-details              # Get your current IP
-npm run cli -- get-ip-details 1.1.1.1 --include-extended-data
-npm run cli -- get-ip-details 8.8.8.8 --jq "{ip: query, country: country}"  # JQ filter
-npm run cli -- get-ip-details 8.8.8.8 --output-format json                   # JSON output
+npm run cli -- get-ip-details                                            # Get your current IP
+npm run cli -- get-ip-details 1.1.1.1 -e                                 # With extended data
+npm run cli -- get-ip-details 8.8.8.8 --jq "{ip: query, country: country}"  # JMESPath filter
+npm run cli -- get-ip-details 8.8.8.8 -o json                            # JSON output
 
 # 2. STDIO Transport - For AI assistant integration (Claude Desktop, Cursor)
 npm run mcp:stdio
@@ -149,18 +150,19 @@ src/
 │   ├── error-handler.util.ts # Error handling utilities
 │   ├── config.util.ts      # Environment configuration
 │   ├── constants.util.ts   # Version and package constants
-│   ├── formatter.util.ts   # Markdown formatting
+│   ├── formatter.util.ts   # Markdown formatting and response truncation
 │   ├── toon.util.ts        # TOON format encoding
 │   ├── jq.util.ts          # JMESPath filtering
+│   ├── response.util.ts    # Raw API response logging
 │   └── transport.util.ts   # HTTP transport utilities
 └── index.ts                # Server entry point (dual transport)
 ```
 
 </details>
 
-## 5-Layer Architecture
+## Layered Architecture
 
-The boilerplate follows a clean, layered architecture that promotes maintainability and clear separation of concerns:
+The boilerplate follows a clean, layered architecture with 6 distinct layers that promotes maintainability and clear separation of concerns:
 
 ### 1. CLI Layer (`src/cli/`)
 
@@ -203,10 +205,14 @@ The boilerplate follows a clean, layered architecture that promotes maintainabil
 - **Key Components**:
   - `logger.util.ts`: Contextual logging (file:method context)
   - `error.util.ts`: MCP-specific error formatting
+  - `error-handler.util.ts`: Error handling and context building
   - `transport.util.ts`: HTTP/API utilities with retry logic
   - `config.util.ts`: Environment configuration management
+  - `constants.util.ts`: Version and package constants
+  - `formatter.util.ts`: Markdown formatting and response truncation
   - `toon.util.ts`: TOON format encoding (token-efficient output)
   - `jq.util.ts`: JMESPath filtering for response transformation
+  - `response.util.ts`: Raw API response logging to `/tmp/mcp/<project>/`
 
 ## Developer Guide
 
@@ -246,21 +252,23 @@ npm run update:deps         # Update dependencies
 ### Environment Variables
 
 #### Core Configuration
-- `TRANSPORT_MODE`: Transport mode (`stdio` | `http`, default: `stdio`)  
+- `TRANSPORT_MODE`: Transport mode (`stdio` | `http`, default: `stdio`)
 - `PORT`: HTTP server port (default: `3000`)
 - `DEBUG`: Enable debug logging (`true` | `false`, default: `false`)
+- `NODE_ENV`: Node environment (`development` | `production`, default: `development`)
 
-#### IP API Configuration  
+#### IP API Configuration
 - `IPAPI_API_TOKEN`: API token for ip-api.com extended data (optional, free tier available)
 
 #### Example `.env` File
 ```bash
-# Basic configuration
+# Core configuration
 TRANSPORT_MODE=http
-PORT=3001
+PORT=3000
 DEBUG=true
+NODE_ENV=development
 
-# Extended data (requires ip-api.com account)
+# External API Keys
 IPAPI_API_TOKEN=your_token_here
 ```
 
@@ -272,6 +280,12 @@ IPAPI_API_TOKEN=your_token_here
   - Test your tools interactively
 
 - **Debug Logging**: Enable with `DEBUG=true` environment variable
+
+- **Raw Response Logging**: Large API responses (>40,000 characters) are automatically logged
+  - Responses saved to `/tmp/mcp/<project-name>/` directory
+  - Filename format: `<timestamp>-<random>.txt`
+  - Includes request details, response data, and performance metrics
+  - Truncated responses include guidance on accessing the full raw file
 
 <details>
 <summary><b>Configuration (Click to expand)</b></summary>
@@ -451,7 +465,7 @@ async function handleGetData(args: Record<string, unknown>) {
 	}
 }
 
-// Registration function using the modern registerTool API (SDK v1.22.0+)
+// Registration function using the modern registerTool API (SDK v1.23.0)
 function registerTools(server: McpServer) {
 	const registerLogger = logger.forMethod('registerTools');
 	registerLogger.debug('Registering example tools...');
@@ -560,7 +574,7 @@ function registerResources(server: McpServer) {
 	const registerLogger = logger.forMethod('registerResources');
 	registerLogger.debug('Registering example resources...');
 
-	// Use registerResource with ResourceTemplate for parameterized URIs (SDK v1.22.0+)
+	// Use registerResource with ResourceTemplate for parameterized URIs (SDK v1.23.0)
 	server.registerResource(
 		'example-data',
 		new ResourceTemplate('example://{param}', { list: undefined }),
@@ -610,21 +624,29 @@ The boilerplate includes a complete IP address geolocation example demonstrating
 
 **CLI Commands:**
 ```bash
-npm run cli -- get-ip-details                           # Get current public IP (TOON format)
-npm run cli -- get-ip-details 8.8.8.8                   # Get details for specific IP
-npm run cli -- get-ip-details 1.1.1.1 --include-extended-data   # With extended data
-npm run cli -- get-ip-details 8.8.8.8 --no-use-https    # Force HTTP (for free tier)
-npm run cli -- get-ip-details 8.8.8.8 --output-format json      # JSON output
-npm run cli -- get-ip-details 8.8.8.8 --jq "{ip: query, country: country}"  # Filtered output
+npm run cli -- get-ip-details                                            # Get current public IP (TOON format)
+npm run cli -- get-ip-details 8.8.8.8                                    # Get details for specific IP
+npm run cli -- get-ip-details 1.1.1.1 -e                                 # Short form with extended data
+npm run cli -- get-ip-details 1.1.1.1 --include-extended-data           # Long form with extended data
+npm run cli -- get-ip-details 8.8.8.8 --no-use-https                    # Force HTTP (for free tier)
+npm run cli -- get-ip-details 8.8.8.8 -o json                            # JSON output (short form)
+npm run cli -- get-ip-details 8.8.8.8 --output-format json              # JSON output (long form)
+npm run cli -- get-ip-details 8.8.8.8 --jq "{ip: query, country: country}"  # JMESPath filtered output
 ```
 
 **MCP Tools:**
 - `ip_get_details` - IP geolocation lookup for AI assistants
-  - Supports `outputFormat`: "toon" (default) or "json"
-  - Supports `jq`: JMESPath expression for filtering
+  - Parameters:
+    - `ipAddress` (optional): IP address to lookup (omit for current device's public IP)
+    - `includeExtendedData` (optional, default: `false`): Include ASN, host, organization data (requires API token)
+    - `useHttps` (optional, default: `true`): Use HTTPS for API calls
+    - `jq` (optional): JMESPath expression to filter/transform response
+    - `outputFormat` (optional, default: `"toon"`): Output format - "toon" or "json"
 
 **MCP Resources:**
-- `ip://{ipAddress}` - IP details resource template (e.g., `ip://8.8.8.8`)
+- `ip://{ipAddress}` - IP details resource template (e.g., `ip://8.8.8.8`, `ip://1.1.1.1`)
+  - Returns IP geolocation data in Markdown format
+  - Uses TOON format by default for token efficiency
 
 ### Features Demonstrated
 
@@ -713,7 +735,7 @@ npm run test:cli           # CLI-specific tests only
 
 ### MCP Protocol Resources
 - [MCP Specification](https://modelcontextprotocol.io/specification) - Latest protocol specification
-- [MCP SDK Documentation](https://github.com/modelcontextprotocol/typescript-sdk) - TypeScript SDK v1.23.0+
+- [MCP SDK Documentation](https://github.com/modelcontextprotocol/typescript-sdk) - TypeScript SDK v1.23.0
 - [MCP Inspector](https://github.com/modelcontextprotocol/inspector) - Visual debugging tool
 - [MCP Concepts](https://modelcontextprotocol.io/docs/concepts) - Tools, resources, transports
 
