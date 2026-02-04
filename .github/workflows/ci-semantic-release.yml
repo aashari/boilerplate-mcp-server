@@ -15,7 +15,7 @@ jobs:
             contents: write # Needed to create releases and tags
             issues: write # Needed to comment on issues
             pull-requests: write # Needed to comment on pull requests
-            # packages permission removed as we're not using GitHub Packages
+            id-token: write # Needed for OIDC trusted publishing to npm
         steps:
             # Step 1: Check out the full Git history for proper versioning
             - name: Checkout
@@ -56,11 +56,9 @@ jobs:
             - name: Semantic Release
               id: semantic
               env:
-                  # Tokens needed for GitHub and npm authentication
+                  # Authentication tokens
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For creating releases and commenting
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }} # For publishing to npm
+                  # NPM authentication via OIDC trusted publishing (no token needed)
               run: |
-                  echo "Running semantic-release for version bump and npm publishing"
+                  echo "Running semantic-release with OIDC trusted publishing"
                   npx semantic-release
-
-                  # Note: GitHub Packages publishing has been removed
