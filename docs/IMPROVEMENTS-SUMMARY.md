@@ -431,10 +431,10 @@ Time:        9.284 s
 ## Resources
 
 - **Audit Report:** [AUDIT-2025-01-13.md](AUDIT-2025-01-13.md)
-- **Security Guide:** [SECURITY.md](SECURITY.md)
+- **Security Guide:** [../SECURITY.md](../SECURITY.md)
 - **Modernization Guide:** [MODERNIZATION.md](MODERNIZATION.md)
-- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
-- **README:** [README.md](README.md)
+- **Changelog:** [../CHANGELOG.md](../CHANGELOG.md)
+- **README:** [../README.md](../README.md)
 
 ---
 

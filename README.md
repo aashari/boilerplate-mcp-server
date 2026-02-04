@@ -5,7 +5,7 @@ A production-ready foundation for developing custom Model Context Protocol (MCP)
 [![NPM Version](https://img.shields.io/npm/v/@aashari/boilerplate-mcp-server)](https://www.npmjs.com/package/@aashari/boilerplate-mcp-server)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
-> **Latest Update (Feb 2026)**: Updated to MCP SDK 1.25.3 and Zod 4.3.6 with new features like `z.fromJSONSchema()`, `z.xor()`, and improved validation. See [MODERNIZATION.md](MODERNIZATION.md) for details.
+> **Latest Update (Feb 2026)**: Updated to MCP SDK 1.25.3 and Zod 4.3.6 with new features like `z.fromJSONSchema()`, `z.xor()`, and improved validation. See [docs/MODERNIZATION.md](docs/MODERNIZATION.md) for details.
 
 ## Features
 
@@ -99,7 +99,7 @@ npm run mcp:inspect                         # Auto-opens browser with debugging 
 
 **📖 Complete security documentation:** [SECURITY.md](SECURITY.md)
 
-**🔍 Security audit report:** [AUDIT-2025-01-13.md](AUDIT-2025-01-13.md)
+**🔍 Security audit report:** [docs/AUDIT-2025-01-13.md](docs/AUDIT-2025-01-13.md)
 
 ## Output Formats
 

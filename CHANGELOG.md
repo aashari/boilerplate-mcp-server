@@ -19,7 +19,7 @@
   - Security checklists for dev/staging/production
   - Best practices for input validation, rate limiting, logging
 
-* **security:** publish security audit report ([AUDIT-2025-01-13.md](AUDIT-2025-01-13.md))
+* **security:** publish security audit report ([docs/AUDIT-2025-01-13.md](docs/AUDIT-2025-01-13.md))
   - Independent audit against MCP best practices
   - 70% compliance rating with clear improvement roadmap
   - All critical security gaps addressed in this release
