@@ -1,3 +1,22 @@
+# [2.0.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.17.0...v2.0.0) (2026-02-04)
+
+
+### Bug Fixes
+
+* disable npm publishing in semantic-release ([7bef842](https://github.com/aashari/boilerplate-mcp-server/commit/7bef84256a953919a711a1ee132be3b2397d8aa4))
+
+
+### Features
+
+* add security hardening, prompts support, and ResourceLink pattern ([02a89c2](https://github.com/aashari/boilerplate-mcp-server/commit/02a89c2aa55db3ce52fbcb5ccb693b833f1e5e9d))
+
+
+### BREAKING CHANGES
+
+* none
+Security: DNS rebinding protection, localhost binding
+Testing: 47 unit tests + 15 integration tests passing (100%)
+
 # [1.19.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.18.0...v1.19.0) (2026-02-04)
 
 ### Security 🔒
