@@ -1,3 +1,16 @@
+# [3.0.0](https://github.com/aashari/boilerplate-mcp-server/compare/v2.0.0...v3.0.0) (2026-02-04)
+
+
+### Features
+
+* migrate to OIDC trusted publishing for npm (long-term solution) ([b7c36e3](https://github.com/aashari/boilerplate-mcp-server/commit/b7c36e31688e68a38cfd21977c938dc48d1bb380))
+
+
+### BREAKING CHANGES
+
+* Requires one-time OIDC configuration on npmjs.com
+See docs/OIDC-TRUSTED-PUBLISHING-SETUP.md for complete migration guide
+
 # [2.0.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.17.0...v2.0.0) (2026-02-04)
 
 
