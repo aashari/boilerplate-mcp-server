@@ -128,6 +128,7 @@ export function getDeepOriginalError(error: unknown): unknown {
  */
 export function formatErrorForMcpTool(error: unknown): {
 	content: Array<{ type: 'text'; text: string }>;
+	isError: true;
 	metadata?: {
 		errorType: ErrorType;
 		statusCode?: number;
@@ -157,6 +158,7 @@ export function formatErrorForMcpTool(error: unknown): {
 				text: `Error: ${mcpError.message}`,
 			},
 		],
+		isError: true,
 		metadata: {
 			errorType: mcpError.type,
 			statusCode: mcpError.statusCode,

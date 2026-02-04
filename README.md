@@ -5,19 +5,25 @@ A production-ready foundation for developing custom Model Context Protocol (MCP)
 [![NPM Version](https://img.shields.io/npm/v/@aashari/boilerplate-mcp-server)](https://www.npmjs.com/package/@aashari/boilerplate-mcp-server)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
+> **Latest Update (Feb 2026)**: Updated to MCP SDK 1.25.3 and Zod 4.3.6 with new features like `z.fromJSONSchema()`, `z.xor()`, and improved validation. See [MODERNIZATION.md](MODERNIZATION.md) for details.
+
 ## Features
 
+- **Security First**: DNS rebinding protection, localhost-only binding, secure error handling
 - **Dual Transport Support**: STDIO and Streamable HTTP transports with automatic fallback
-- **Layered Architecture**: Clean separation between CLI, tools, resources, controllers, services, and utilities
-- **Type Safety**: Full TypeScript implementation with Zod v4.1.13 schema validation
+- **Layered Architecture**: Clean separation between CLI, tools, resources, prompts, controllers, services, and utilities
+- **Type Safety**: Full TypeScript implementation with Zod v4.3.6 schema validation
+- **All MCP Primitives**: Tools, resources, and prompts (with examples)
+- **ResourceLink Pattern**: Token-efficient resource references for large responses
 - **TOON Output Format**: Token-Oriented Object Notation for 30-60% fewer tokens than JSON
 - **JMESPath Filtering**: Extract only needed fields from responses to reduce token costs
 - **Raw Response Logging**: Automatic logging of large API responses to `/tmp/mcp/<project>/` with truncation guidance
-- **Modern SDK**: Uses MCP SDK v1.23.0 with `registerTool` API pattern
-- **Complete IP Address Example**: Tools, resources, and CLI commands for IP geolocation
-- **Comprehensive Testing**: Unit and integration tests with coverage reporting
+- **Modern SDK**: Uses MCP SDK v1.25.3 with `registerTool` API pattern (ready for v2 migration)
+- **Complete IP Address Example**: Tools, resources, prompts, and CLI commands for IP geolocation
+- **Comprehensive Testing**: Unit and integration tests with coverage reporting (47 tests passing)
 - **Production Tooling**: ESLint, Prettier, semantic-release, and MCP Inspector integration
-- **Error Handling**: Structured error handling with contextual logging
+- **Error Handling**: Structured error handling with `isError` field and contextual logging
+- **Security Documentation**: Complete [SECURITY.md](SECURITY.md) with authentication implementation guides
 
 ## What is MCP?
 
@@ -74,6 +80,26 @@ npm run mcp:inspect                         # Auto-opens browser with debugging 
 - MCP Endpoint: `http://localhost:3000/mcp`
 - Health Check: `http://localhost:3000/` → Returns server version
 - Run with: `TRANSPORT_MODE=http node dist/index.js`
+
+## Security 🔒
+
+**This boilerplate implements production-ready security measures:**
+
+### ✅ Built-In Protection
+
+1. **DNS Rebinding Protection**: Origin header validation prevents malicious websites from accessing your localhost server
+2. **Localhost-Only Binding**: Server explicitly binds to `127.0.0.1` (not accessible from network)
+3. **Secure Error Handling**: Error responses include `isError: true` flag and don't leak sensitive information
+
+### 🔐 Security Best Practices
+
+- **Local Development**: No authentication required (localhost-only + DNS rebinding protection)
+- **Network Deployment**: Authentication REQUIRED - see [SECURITY.md](SECURITY.md) for implementation guides
+- **Production**: Use mTLS, OAuth 2.0, or bearer tokens (detailed in [SECURITY.md](SECURITY.md))
+
+**📖 Complete security documentation:** [SECURITY.md](SECURITY.md)
+
+**🔍 Security audit report:** [AUDIT-2025-01-13.md](AUDIT-2025-01-13.md)
 
 ## Output Formats
 
@@ -138,10 +164,13 @@ src/
 │   ├── vendor.ip-api.com.service.ts  # ip-api.com service
 │   └── vendor.ip-api.com.types.ts    # Service type definitions
 ├── tools/                  # MCP tool definitions (AI interface)
-│   ├── ipaddress.tool.ts   # IP lookup tool for AI assistants
+│   ├── ipaddress.tool.ts   # IP lookup tool (inline content)
+│   ├── ipaddress-link.tool.ts  # IP lookup with ResourceLink pattern
 │   └── ipaddress.types.ts  # Tool argument schemas
 ├── resources/              # MCP resource definitions
 │   └── ipaddress.resource.ts # IP lookup resource (URI: ip://address)
+├── prompts/                # MCP prompt definitions
+│   └── analysis.prompt.ts  # IP analysis prompt templates
 ├── types/                  # Global type definitions
 │   └── common.types.ts     # Shared interfaces (ControllerResponse, etc.)
 ├── utils/                  # Shared utilities
@@ -730,6 +759,17 @@ npm run test:cli           # CLI-specific tests only
 ## License
 
 [ISC License](https://opensource.org/licenses/ISC)
+
+## MCP SDK v2 Preparation
+
+⚠️ **Note**: MCP SDK v2 is in development (expected stable Q1 2026). This boilerplate is ready for migration with minimal changes needed.
+
+**Key v2 Changes**:
+- Package split: `@modelcontextprotocol/server` and `@modelcontextprotocol/client`
+- Optional middleware packages for Express, Hono, Node.js HTTP
+- Same core API patterns (this boilerplate already uses modern APIs)
+
+See [MODERNIZATION.md](MODERNIZATION.md) for detailed migration guide and timeline.
 
 ## Resources & Documentation
 

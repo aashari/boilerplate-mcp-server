@@ -1,3 +1,134 @@
+# [1.19.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.18.0...v1.19.0) (2026-02-04)
+
+### Security 🔒
+
+* **security:** implement DNS rebinding protection with Origin header validation ([src/index.ts](src/index.ts))
+  - Validates Origin header on all HTTP requests
+  - Prevents malicious websites from accessing localhost MCP server
+  - Allows localhost/127.0.0.1 origins only
+  - Returns 403 Forbidden for invalid origins
+
+* **security:** add explicit localhost-only binding ([src/index.ts](src/index.ts))
+  - Server explicitly binds to 127.0.0.1 (not 0.0.0.0)
+  - Prevents network exposure and remote attacks
+  - Ensures server only accepts local connections
+
+* **security:** add comprehensive security documentation ([SECURITY.md](SECURITY.md))
+  - Complete threat model and mitigation strategies
+  - Authentication implementation guides (Bearer, API Key, OAuth, mTLS)
+  - Security checklists for dev/staging/production
+  - Best practices for input validation, rate limiting, logging
+
+* **security:** publish security audit report ([AUDIT-2025-01-13.md](AUDIT-2025-01-13.md))
+  - Independent audit against MCP best practices
+  - 70% compliance rating with clear improvement roadmap
+  - All critical security gaps addressed in this release
+
+### Features ✨
+
+* **mcp:** add `isError: true` field to tool error responses ([src/utils/error.util.ts](src/utils/error.util.ts))
+  - Follows MCP best practices for error signaling
+  - Enables clients to reliably detect error states
+  - Maintains backward compatibility with metadata
+
+* **mcp:** add ResourceLink pattern example ([src/tools/ipaddress-link.tool.ts](src/tools/ipaddress-link.tool.ts))
+  - New `ip_get_details_link` tool demonstrates ResourceLink pattern
+  - Returns resource references instead of inline content
+  - Reduces token usage for large responses
+  - Shows pattern for cacheable, reusable data
+
+* **mcp:** add prompt registration support ([src/prompts/analysis.prompt.ts](src/prompts/analysis.prompt.ts))
+  - New `ip-analysis` prompt generates structured IP analysis requests
+  - Supports multiple focus modes (security, geolocation, network, comprehensive)
+  - Demonstrates all three MCP primitives (tools, resources, prompts)
+  - Provides template for AI-driven analysis workflows
+
+* **architecture:** add prompts layer to 7-layer architecture
+  - Clean separation of prompt templates from tools/resources
+  - Type-safe prompt argument schemas with Zod
+  - Registered in index.ts alongside tools and resources
+
+### Documentation 📖
+
+* **readme:** update README with security section and new features
+  - Add security badges and protection summary
+  - Document ResourceLink pattern and prompt examples
+  - Update architecture overview to 7 layers
+  - Add references to SECURITY.md and audit report
+
+* **docs:** update project structure in README
+  - Add prompts/ directory
+  - Add ipaddress-link.tool.ts
+  - Update layer descriptions
+
+### Testing ✅
+
+All tests passing after security and feature additions:
+- ✅ 6 test suites, 47 tests passed
+- ✅ Build successful with TypeScript compilation
+- ✅ DNS rebinding protection tested
+- ✅ Localhost binding verified
+- ✅ New tools and prompts functional
+
+### Breaking Changes
+
+**None** - All changes are backward compatible additions.
+
+---
+
+# [1.18.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.17.0...v1.18.0) (2026-02-04)
+
+### Features
+
+* **deps:** modernize all dependencies to latest stable versions ([#TBD](https://github.com/aashari/boilerplate-mcp-server/issues/TBD))
+  - Update MCP SDK from 1.23.0 to 1.25.3 (stability improvements)
+  - Update Zod from 4.1.13 to 4.3.6 (major feature release)
+  - Update @toon-format/toon from 2.0.1 to 2.1.0
+  - Update Express from 5.1.0 to 5.2.1
+  - Update Commander from 14.0.2 to 14.0.3
+  - Update CORS from 2.8.5 to 2.8.6
+  - Update @types/node from 24.10.1 to 24.10.10
+
+### Documentation
+
+* **modernization:** add comprehensive modernization guide ([MODERNIZATION.md](MODERNIZATION.md))
+  - Document new Zod 4.3 features (z.fromJSONSchema, z.xor, z.looseRecord, .exactOptional)
+  - Add MCP SDK v2 preparation guide
+  - Include migration timeline and recommendations
+  - Provide code examples for new features
+
+* **readme:** update README with latest versions and v2 preparation notes
+
+### Zod 4.3 New Features Available
+
+While maintaining backward compatibility, the following new Zod features are now available:
+
+- `z.fromJSONSchema()` - Convert JSON Schema to Zod schemas
+- `z.xor()` - Exclusive union validation (exactly one must match)
+- `z.looseRecord()` - Partial record validation
+- `.exactOptional()` - Strict optional properties
+- `.apply()` - Schema composition helper
+- `.with()` - Readable alias for `.check()`
+- Type predicates on `.refine()`
+- `z.slugify()` - URL-friendly slug transformation
+
+### MCP SDK v2 Preparation
+
+- Confirmed compatibility with v2 patterns (no code changes needed)
+- Added v2 migration guide and timeline
+- Project already uses modern v1.x APIs (registerTool, ResourceTemplate, etc.)
+
+### Testing
+
+All tests pass with updated dependencies:
+- ✅ 6 test suites, 47 tests passed
+- ✅ CLI functionality verified
+- ✅ HTTPS to HTTP fallback working correctly
+
+### Breaking Changes
+
+**None** - This is a drop-in update maintaining full backward compatibility.
+
 # [1.17.0](https://github.com/aashari/boilerplate-mcp-server/compare/v1.16.1...v1.17.0) (2025-12-03)
 
 

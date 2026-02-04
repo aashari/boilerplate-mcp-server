@@ -10,9 +10,11 @@ import type { Request, Response } from 'express';
 import express from 'express';
 import cors from 'cors';
 
-// Import tools and resources
+// Import tools, resources, and prompts
 import ipAddressTools from './tools/ipaddress.tool.js';
+import ipAddressLinkTools from './tools/ipaddress-link.tool.js';
 import ipAddressResources from './resources/ipaddress.resource.js';
+import analysisPrompts from './prompts/analysis.prompt.js';
 
 const logger = Logger.forContext('index.ts');
 
@@ -47,11 +49,13 @@ export async function startServer(
 		version: VERSION,
 	});
 
-	// Register tools and resources
-	serverLogger.info('Registering MCP tools and resources...');
+	// Register tools, resources, and prompts
+	serverLogger.info('Registering MCP tools, resources, and prompts...');
 	ipAddressTools.registerTools(serverInstance);
+	ipAddressLinkTools.registerTools(serverInstance);
 	ipAddressResources.registerResources(serverInstance);
-	serverLogger.debug('All tools and resources registered');
+	analysisPrompts.registerPrompts(serverInstance);
+	serverLogger.debug('All tools, resources, and prompts registered');
 
 	if (mode === 'stdio') {
 		serverLogger.info('Using STDIO transport');
@@ -76,6 +80,44 @@ export async function startServer(
 		serverLogger.info('Using Streamable HTTP transport');
 
 		const app = express();
+
+		// DNS rebinding protection - validate Origin header
+		// See: https://modelcontextprotocol.io/docs/concepts/transports
+		app.use((req, res, next) => {
+			const origin = req.headers.origin;
+
+			// Allow requests without Origin (direct API calls, curl, etc.)
+			if (!origin) {
+				return next();
+			}
+
+			// Validate Origin matches expected localhost patterns
+			const allowedOrigins = [
+				'http://localhost',
+				'http://127.0.0.1',
+				'https://localhost',
+				'https://127.0.0.1',
+			];
+
+			const isAllowed = allowedOrigins.some(
+				(allowed) =>
+					origin === allowed || origin.startsWith(`${allowed}:`),
+			);
+
+			if (!isAllowed) {
+				serverLogger.warn(
+					`Rejected request with invalid origin: ${origin}`,
+				);
+				res.status(403).json({
+					error: 'Forbidden',
+					message: 'Invalid origin for MCP server',
+				});
+				return;
+			}
+
+			next();
+		});
+
 		app.use(cors());
 		app.use(express.json());
 
@@ -113,10 +155,14 @@ export async function startServer(
 
 		// Start HTTP server
 		const PORT = Number(process.env.PORT ?? 3000);
+		const HOST = '127.0.0.1'; // Explicit localhost binding for security
 		await new Promise<void>((resolve) => {
-			app.listen(PORT, () => {
+			app.listen(PORT, HOST, () => {
 				serverLogger.info(
-					`HTTP transport listening on http://localhost:${PORT}${mcpEndpoint}`,
+					`HTTP transport listening on http://${HOST}:${PORT}${mcpEndpoint}`,
+				);
+				serverLogger.info(
+					'Server bound to localhost only for security',
 				);
 				resolve();
 			});

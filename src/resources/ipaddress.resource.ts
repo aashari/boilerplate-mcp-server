@@ -22,11 +22,32 @@ function registerResources(server: McpServer) {
 	// ResourceTemplate enables parameterized URIs with {ipAddress} placeholder
 	server.registerResource(
 		'ip-lookup',
-		new ResourceTemplate('ip://{ipAddress}', { list: undefined }),
+		new ResourceTemplate('ip://{ipAddress}', {
+			list: async () => {
+				// Return example IPs that can be looked up
+				return {
+					resources: [
+						{
+							uri: 'ip://8.8.8.8',
+							name: 'Google DNS',
+							description: 'Lookup Google DNS server',
+							mimeType: 'text/markdown',
+						},
+						{
+							uri: 'ip://1.1.1.1',
+							name: 'Cloudflare DNS',
+							description: 'Lookup Cloudflare DNS server',
+							mimeType: 'text/markdown',
+						},
+					],
+				};
+			},
+		}),
 		{
 			title: 'IP Address Lookup', // Display name for UI
 			description:
 				'Retrieve geolocation and network information for a public IP address',
+			mimeType: 'text/markdown',
 		},
 		async (uri, variables) => {
 			const methodLogger = logger.forMethod('ipLookupResource');
