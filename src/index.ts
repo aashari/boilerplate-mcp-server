@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+import { randomUUID } from 'node:crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { Logger } from './utils/logger.util.js';
 import { config } from './utils/config.util.js';
 import { VERSION, PACKAGE_NAME } from './utils/constants.util.js';
@@ -18,11 +20,45 @@ import analysisPrompts from './prompts/analysis.prompt.js';
 
 const logger = Logger.forContext('index.ts');
 
+type HttpSession = {
+	server: McpServer;
+	transport: StreamableHTTPServerTransport;
+};
+
 let serverInstance: McpServer | null = null;
 let transportInstance:
 	| StreamableHTTPServerTransport
 	| StdioServerTransport
 	| null = null;
+const httpSessions = new Map<string, HttpSession>();
+
+function createMcpServer(): McpServer {
+	const server = new McpServer({
+		name: PACKAGE_NAME,
+		version: VERSION,
+	});
+
+	ipAddressTools.registerTools(server);
+	ipAddressLinkTools.registerTools(server);
+	ipAddressResources.registerResources(server);
+	analysisPrompts.registerPrompts(server);
+
+	return server;
+}
+
+function getSessionId(req: Request): string | null {
+	const rawSessionId = req.headers['mcp-session-id'];
+
+	if (Array.isArray(rawSessionId)) {
+		return rawSessionId[0] ?? null;
+	}
+
+	if (typeof rawSessionId === 'string' && rawSessionId.length > 0) {
+		return rawSessionId;
+	}
+
+	return null;
+}
 
 /**
  * Start the MCP server with the specified transport mode
@@ -43,21 +79,12 @@ export async function startServer(
 		serverLogger.debug('Debug mode enabled');
 	}
 
-	serverLogger.info(`Initializing Boilerplate MCP server v${VERSION}`);
-	serverInstance = new McpServer({
-		name: PACKAGE_NAME,
-		version: VERSION,
-	});
-
-	// Register tools, resources, and prompts
-	serverLogger.info('Registering MCP tools, resources, and prompts...');
-	ipAddressTools.registerTools(serverInstance);
-	ipAddressLinkTools.registerTools(serverInstance);
-	ipAddressResources.registerResources(serverInstance);
-	analysisPrompts.registerPrompts(serverInstance);
-	serverLogger.debug('All tools, resources, and prompts registered');
-
 	if (mode === 'stdio') {
+		serverLogger.info(`Initializing Boilerplate MCP server v${VERSION}`);
+		serverLogger.info('Registering MCP tools, resources, and prompts...');
+		serverInstance = createMcpServer();
+		serverLogger.debug('All tools, resources, and prompts registered');
+
 		serverLogger.info('Using STDIO transport');
 		transportInstance = new StdioServerTransport();
 
@@ -124,28 +151,154 @@ export async function startServer(
 		const mcpEndpoint = '/mcp';
 		serverLogger.debug(`MCP endpoint: ${mcpEndpoint}`);
 
-		// Create transport instance
-		const transport = new StreamableHTTPServerTransport({
-			// sessionIdGenerator is optional
-			sessionIdGenerator: undefined,
+		// Handle MCP POST requests (initialize + normal RPC calls)
+		app.post(mcpEndpoint, async (req: Request, res: Response) => {
+			const sessionId = getSessionId(req);
+
+			try {
+				if (sessionId) {
+					const session = httpSessions.get(sessionId);
+					if (!session) {
+						res.status(404).json({
+							jsonrpc: '2.0',
+							error: {
+								code: -32001,
+								message:
+									'Session not found for provided Mcp-Session-Id',
+							},
+							id: null,
+						});
+						return;
+					}
+
+					await session.transport.handleRequest(req, res, req.body);
+					return;
+				}
+
+				if (!isInitializeRequest(req.body)) {
+					res.status(400).json({
+						jsonrpc: '2.0',
+						error: {
+							code: -32000,
+							message:
+								'Bad Request: Missing Mcp-Session-Id header',
+						},
+						id: null,
+					});
+					return;
+				}
+
+				serverLogger.info(
+					'Creating new HTTP MCP session for initialize request',
+				);
+
+				let initializedSessionId: string | null = null;
+				const sessionServer = createMcpServer();
+				const sessionTransport = new StreamableHTTPServerTransport({
+					sessionIdGenerator: () => randomUUID(),
+					onsessioninitialized: (newSessionId: string) => {
+						initializedSessionId = newSessionId;
+						httpSessions.set(newSessionId, {
+							server: sessionServer,
+							transport: sessionTransport,
+						});
+						serverLogger.info(
+							`Initialized HTTP MCP session ${newSessionId}`,
+						);
+					},
+					onsessionclosed: (closedSessionId: string) => {
+						const session = httpSessions.get(closedSessionId);
+						if (!session) {
+							return;
+						}
+
+						httpSessions.delete(closedSessionId);
+						void session.server.close().catch((err: unknown) => {
+							serverLogger.error(
+								`Error closing server for session ${closedSessionId}`,
+								err,
+							);
+						});
+
+						serverLogger.info(
+							`Closed HTTP MCP session ${closedSessionId}`,
+						);
+					},
+				});
+
+				await sessionServer.connect(sessionTransport);
+
+				try {
+					await sessionTransport.handleRequest(req, res, req.body);
+				} catch (err) {
+					if (initializedSessionId) {
+						httpSessions.delete(initializedSessionId);
+					}
+					await sessionTransport.close();
+					await sessionServer.close();
+					throw err;
+				}
+			} catch (err) {
+				serverLogger.error('Error in HTTP MCP handler', err);
+				if (!res.headersSent) {
+					res.status(500).json({
+						jsonrpc: '2.0',
+						error: {
+							code: -32603,
+							message: 'Internal server error',
+						},
+						id: null,
+					});
+				}
+			}
 		});
 
-		// Connect server to transport
-		await serverInstance.connect(transport);
-		transportInstance = transport;
+		// Handle optional GET requests for streamable HTTP SSE
+		app.get(mcpEndpoint, async (req: Request, res: Response) => {
+			const sessionId = getSessionId(req);
+			if (!sessionId) {
+				res.status(400).send('Missing Mcp-Session-Id header');
+				return;
+			}
 
-		// Handle all MCP requests
-		app.all(mcpEndpoint, (req: Request, res: Response) => {
-			transport
-				.handleRequest(req, res, req.body)
-				.catch((err: unknown) => {
-					serverLogger.error('Error in transport.handleRequest', err);
-					if (!res.headersSent) {
-						res.status(500).json({
-							error: 'Internal Server Error',
-						});
-					}
-				});
+			const session = httpSessions.get(sessionId);
+			if (!session) {
+				res.status(404).send('Session not found');
+				return;
+			}
+
+			try {
+				await session.transport.handleRequest(req, res);
+			} catch (err) {
+				serverLogger.error('Error in HTTP MCP GET handler', err);
+				if (!res.headersSent) {
+					res.status(500).send('Internal Server Error');
+				}
+			}
+		});
+
+		// Handle session termination requests
+		app.delete(mcpEndpoint, async (req: Request, res: Response) => {
+			const sessionId = getSessionId(req);
+			if (!sessionId) {
+				res.status(400).send('Missing Mcp-Session-Id header');
+				return;
+			}
+
+			const session = httpSessions.get(sessionId);
+			if (!session) {
+				res.status(404).send('Session not found');
+				return;
+			}
+
+			try {
+				await session.transport.handleRequest(req, res);
+			} catch (err) {
+				serverLogger.error('Error in HTTP MCP DELETE handler', err);
+				if (!res.headersSent) {
+					res.status(500).send('Internal Server Error');
+				}
+			}
 		});
 
 		// Health check endpoint
@@ -169,7 +322,7 @@ export async function startServer(
 		});
 
 		setupGracefulShutdown();
-		return serverInstance;
+		return createMcpServer();
 	}
 }
 
@@ -225,6 +378,34 @@ function setupGracefulShutdown() {
 	const shutdown = async () => {
 		try {
 			shutdownLogger.info('Shutting down gracefully...');
+
+			if (httpSessions.size > 0) {
+				shutdownLogger.info(
+					`Closing ${httpSessions.size} active HTTP session(s)`,
+				);
+			}
+
+			for (const [sessionId, session] of httpSessions.entries()) {
+				try {
+					await session.transport.close();
+				} catch (err) {
+					shutdownLogger.error(
+						`Error closing transport for session ${sessionId}`,
+						err,
+					);
+				}
+
+				try {
+					await session.server.close();
+				} catch (err) {
+					shutdownLogger.error(
+						`Error closing server for session ${sessionId}`,
+						err,
+					);
+				}
+			}
+
+			httpSessions.clear();
 
 			if (
 				transportInstance &&

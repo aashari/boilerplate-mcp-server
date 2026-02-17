@@ -148,7 +148,9 @@ async function get(
 
 		// Format the output
 		const content = await toOutputString(filteredData, useToon);
-		return { content, rawResponsePath };
+
+		// Expose canonical resolved IP so callers do not need to parse rendered output
+		return { content, rawResponsePath, resolvedIp: data.query };
 	} catch (error) {
 		throw handleControllerError(
 			error,

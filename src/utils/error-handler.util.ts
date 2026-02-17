@@ -241,7 +241,7 @@ export function createUserFriendlyErrorMessage(
 		? `${entityType}${entityIdStr ? ` ${entityIdStr}` : ''}`
 		: 'Resource';
 
-	let message = '';
+	let message: string;
 
 	switch (code) {
 		case ErrorCode.NOT_FOUND:

@@ -56,4 +56,10 @@ export interface ControllerResponse {
 	 * When the response is truncated, this path allows AI to access the full data.
 	 */
 	rawResponsePath?: string | null;
+
+	/**
+	 * Canonical resolved IP from the upstream API response.
+	 * Use this to avoid parsing formatted output when consumers need the queried IP value.
+	 */
+	resolvedIp?: string;
 }

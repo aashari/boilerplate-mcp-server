@@ -263,10 +263,6 @@ npm run mcp:stdio           # STDIO transport for AI assistants
 npm run mcp:http            # HTTP transport on port 3000
 npm run mcp:inspect         # HTTP + auto-open MCP Inspector
 
-# Development with Debugging
-npm run dev:stdio           # STDIO with MCP Inspector integration
-npm run dev:http            # HTTP with debug logging enabled
-
 # Testing
 npm test                    # Run all tests (Jest)
 npm run test:coverage       # Generate coverage report
@@ -275,7 +271,6 @@ npm run test:cli            # Run CLI-specific tests
 # Code Quality
 npm run lint                # ESLint with TypeScript rules
 npm run format              # Prettier formatting
-npm run update:deps         # Update dependencies
 ```
 
 ### Environment Variables

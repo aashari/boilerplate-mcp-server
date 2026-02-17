@@ -1,49 +1,42 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
+import { truncateForAI } from '../utils/formatter.util.js';
 import { z } from 'zod';
 import ipAddressController from '../controllers/ipaddress.controller.js';
+import { IpAddressToolArgs } from './ipaddress.types.js';
 
 const logger = Logger.forContext('tools/ipaddress-link.tool.ts');
 
 /**
  * Zod schema for the resource-link tool arguments
+ * Keep argument shape aligned with ip_get_details for consistency.
  */
 const GetIpDetailsLinkToolSchema = z.object({
 	ipAddress: z
 		.string()
 		.optional()
 		.describe('IP address to lookup (omit for current IP)'),
-	includeExtendedData: z
-		.boolean()
-		.optional()
-		.describe('Include extended data (ASN, host, proxy detection)'),
+	...IpAddressToolArgs.shape,
 });
 
 /**
  * Tool description for ip_get_details_link
  */
-const IP_GET_DETAILS_LINK_DESCRIPTION = `Retrieve IP address details and return as a resource reference (ResourceLink pattern).
+const IP_GET_DETAILS_LINK_DESCRIPTION = `Retrieve IP address details and return both direct content and a resource link.
 
-**This demonstrates the ResourceLink pattern** - instead of embedding full data inline, the tool returns a reference to a resource. This is useful for:
-- Large responses that would consume many tokens
-- Data that clients may cache and reuse
-- Responses that other tools can reference
+**Consistency with ip_get_details:**
+- Uses the same arguments: \`ipAddress\`, \`includeExtendedData\`, \`useHttps\`, \`jq\`, \`outputFormat\`
+- Uses the same output rendering pipeline (TOON by default, JSON when \`outputFormat: "json"\`)
 
-**When to use ResourceLink vs inline content:**
-- ResourceLink: Large data, cacheable, reusable across multiple tools
-- Inline: Small data, one-time use, immediate context
-
-**Parameters:**
-- \`ipAddress\` - IP to lookup (omit for current device's public IP)
-- \`includeExtendedData\` - Include ASN, host, proxy detection (requires API token)
-
-**Returns:** A resource reference (resourceLink) instead of inline text.
+**What this returns:**
+- A normal text response (same rendered output as \`ip_get_details\`)
+- A \`resource_link\` entry pointing to \`ip://<resolved-ip>\` for resource-style clients
 
 **Note:** Cannot lookup private IPs (192.168.x.x, 10.x.x.x). Powered by ip-api.com.`;
 
 /**
- * Handle IP lookup with ResourceLink pattern
+ * Handle IP lookup with resource-link + text output consistency.
  */
 async function handleGetIpDetailsLink(args: Record<string, unknown>) {
 	const methodLogger = logger.forMethod('handleGetIpDetailsLink');
@@ -53,28 +46,32 @@ async function handleGetIpDetailsLink(args: Record<string, unknown>) {
 	);
 
 	try {
-		// First, verify we can get the data
 		const result = await ipAddressController.get(args);
-
-		// Extract the actual IP from the result
-		// The result.content includes the IP in TOON or JSON format
-		const ipMatch = result.content.match(/query[:\s]+([0-9.]+)/);
 		const actualIp =
-			ipMatch?.[1] || (args.ipAddress as string) || 'current';
+			result.resolvedIp ||
+			(typeof args.ipAddress === 'string' ? args.ipAddress : 'current');
 
-		methodLogger.debug(`IP resolved to: ${actualIp}`);
+		methodLogger.debug(`Resolved IP for resource URI: ${actualIp}`);
 
-		// Return a ResourceLink instead of inline content
-		// This tells the client to fetch the resource separately
+		const textContent = truncateForAI(
+			result.content,
+			result.rawResponsePath,
+		);
+		const mimeType =
+			args.outputFormat === 'json' ? 'application/json' : 'text/plain';
+
 		return {
 			content: [
 				{
-					type: 'resource' as const,
-					resource: {
-						uri: `ip://${actualIp}`,
-						text: `IP lookup result available at resource ip://${actualIp}`,
-						mimeType: 'text/markdown',
-					},
+					type: 'text' as const,
+					text: textContent,
+				},
+				{
+					type: 'resource_link' as const,
+					uri: `ip://${actualIp}`,
+					name: `IP lookup ${actualIp}`,
+					description: `Resource link for IP lookup result ${actualIp}`,
+					mimeType,
 				},
 			],
 		};
