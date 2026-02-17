@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/aashari/boilerplate-mcp-server/compare/v3.0.0...v3.1.0) (2026-02-17)
+
+
+### Features
+
+* modernize HTTP transport and standardize MCP tool contracts ([615b373](https://github.com/aashari/boilerplate-mcp-server/commit/615b3732c10ad2c607a899de0f6632221b6f7bc3))
+
 # [3.0.0](https://github.com/aashari/boilerplate-mcp-server/compare/v2.0.0...v3.0.0) (2026-02-04)
 
 
