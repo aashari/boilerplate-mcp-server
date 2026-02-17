@@ -110,6 +110,12 @@ function registerTools(server: McpServer) {
 			title: 'IP Address Lookup',
 			description: IP_GET_DETAILS_DESCRIPTION,
 			inputSchema: GetIpDetailsToolSchema,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		handleGetIpDetails,
 	);

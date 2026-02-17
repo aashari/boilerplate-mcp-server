@@ -23,6 +23,7 @@ const logger = Logger.forContext('index.ts');
 type HttpSession = {
 	server: McpServer;
 	transport: StreamableHTTPServerTransport;
+	lastActivity: number;
 };
 
 let serverInstance: McpServer | null = null;
@@ -30,6 +31,8 @@ let transportInstance:
 	| StreamableHTTPServerTransport
 	| StdioServerTransport
 	| null = null;
+let httpServerInstance: ReturnType<import('express').Express['listen']> | null =
+	null;
 const httpSessions = new Map<string, HttpSession>();
 
 function createMcpServer(): McpServer {
@@ -122,8 +125,10 @@ export async function startServer(
 			const allowedOrigins = [
 				'http://localhost',
 				'http://127.0.0.1',
+				'http://[::1]',
 				'https://localhost',
 				'https://127.0.0.1',
+				'https://[::1]',
 			];
 
 			const isAllowed = allowedOrigins.some(
@@ -145,8 +150,8 @@ export async function startServer(
 			next();
 		});
 
-		app.use(cors());
-		app.use(express.json());
+		app.use(cors({ origin: true }));
+		app.use(express.json({ limit: '1mb' }));
 
 		const mcpEndpoint = '/mcp';
 		serverLogger.debug(`MCP endpoint: ${mcpEndpoint}`);
@@ -171,6 +176,7 @@ export async function startServer(
 						return;
 					}
 
+					session.lastActivity = Date.now();
 					await session.transport.handleRequest(req, res, req.body);
 					return;
 				}
@@ -201,6 +207,7 @@ export async function startServer(
 						httpSessions.set(newSessionId, {
 							server: sessionServer,
 							transport: sessionTransport,
+							lastActivity: Date.now(),
 						});
 						serverLogger.info(
 							`Initialized HTTP MCP session ${newSessionId}`,
@@ -310,7 +317,7 @@ export async function startServer(
 		const PORT = Number(process.env.PORT ?? 3000);
 		const HOST = '127.0.0.1'; // Explicit localhost binding for security
 		await new Promise<void>((resolve) => {
-			app.listen(PORT, HOST, () => {
+			httpServerInstance = app.listen(PORT, HOST, () => {
 				serverLogger.info(
 					`HTTP transport listening on http://${HOST}:${PORT}${mcpEndpoint}`,
 				);
@@ -321,7 +328,39 @@ export async function startServer(
 			});
 		});
 
+		// Reap idle sessions every 5 minutes (TTL: 30 minutes)
+		const SESSION_TTL_MS = 30 * 60 * 1000;
+		const REAP_INTERVAL_MS = 5 * 60 * 1000;
+		const reapInterval = setInterval(() => {
+			const now = Date.now();
+			for (const [sessionId, session] of httpSessions.entries()) {
+				if (now - session.lastActivity > SESSION_TTL_MS) {
+					serverLogger.info(`Reaping idle HTTP session ${sessionId}`);
+					httpSessions.delete(sessionId);
+					void session.transport
+						.close()
+						.catch((err: unknown) =>
+							serverLogger.debug(
+								`Error closing transport for reaped session ${sessionId}`,
+								err,
+							),
+						)
+						.then(() => session.server.close())
+						.catch((err: unknown) =>
+							serverLogger.debug(
+								`Error closing server for reaped session ${sessionId}`,
+								err,
+							),
+						);
+				}
+			}
+		}, REAP_INTERVAL_MS);
+		reapInterval.unref();
+
 		setupGracefulShutdown();
+
+		// HTTP mode uses per-session servers (managed in httpSessions map).
+		// Return a reference server for API compatibility; not connected to any transport.
 		return createMcpServer();
 	}
 }
@@ -374,8 +413,12 @@ if (require.main === module) {
  */
 function setupGracefulShutdown() {
 	const shutdownLogger = Logger.forContext('index.ts', 'shutdown');
+	let shuttingDown = false;
 
 	const shutdown = async () => {
+		if (shuttingDown) return;
+		shuttingDown = true;
+
 		try {
 			shutdownLogger.info('Shutting down gracefully...');
 
@@ -406,6 +449,12 @@ function setupGracefulShutdown() {
 			}
 
 			httpSessions.clear();
+
+			if (httpServerInstance) {
+				await new Promise<void>((resolve) => {
+					httpServerInstance!.close(() => resolve());
+				});
+			}
 
 			if (
 				transportInstance &&

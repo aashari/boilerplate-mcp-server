@@ -97,6 +97,12 @@ function registerTools(server: McpServer) {
 			title: 'IP Address Lookup (ResourceLink)',
 			description: IP_GET_DETAILS_LINK_DESCRIPTION,
 			inputSchema: GetIpDetailsLinkToolSchema,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		handleGetIpDetailsLink,
 	);
