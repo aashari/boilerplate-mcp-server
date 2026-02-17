@@ -322,8 +322,8 @@ logger.warn('Failed authentication attempt', {
 ### 5. Regular Updates
 Keep dependencies up-to-date:
 ```bash
-npm run update:check
-npm run update:deps
+npm outdated
+npx npm-check-updates
 ```
 
 ---

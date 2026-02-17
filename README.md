@@ -5,7 +5,7 @@ A production-ready foundation for developing custom Model Context Protocol (MCP)
 [![NPM Version](https://img.shields.io/npm/v/@aashari/boilerplate-mcp-server)](https://www.npmjs.com/package/@aashari/boilerplate-mcp-server)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
-> **Latest Update (Feb 2026)**: Updated to MCP SDK 1.25.3 and Zod 4.3.6 with new features like `z.fromJSONSchema()`, `z.xor()`, and improved validation. See [docs/MODERNIZATION.md](docs/MODERNIZATION.md) for details.
+> **Latest Update (Feb 2026)**: Updated to MCP SDK 1.26.0 and Zod 4.3.6 with continued modern `registerTool` patterns and streamable HTTP improvements. See [docs/MODERNIZATION.md](docs/MODERNIZATION.md) for details.
 
 ## Features
 
@@ -18,7 +18,7 @@ A production-ready foundation for developing custom Model Context Protocol (MCP)
 - **TOON Output Format**: Token-Oriented Object Notation for 30-60% fewer tokens than JSON
 - **JMESPath Filtering**: Extract only needed fields from responses to reduce token costs
 - **Raw Response Logging**: Automatic logging of large API responses to `/tmp/mcp/<project>/` with truncation guidance
-- **Modern SDK**: Uses MCP SDK v1.25.3 with `registerTool` API pattern (ready for v2 migration)
+- **Modern SDK**: Uses MCP SDK v1.26.0 with `registerTool` API pattern (ready for v2 migration)
 - **Complete IP Address Example**: Tools, resources, prompts, and CLI commands for IP geolocation
 - **Comprehensive Testing**: Unit and integration tests with coverage reporting (47 tests passing)
 - **Production Tooling**: ESLint, Prettier, semantic-release, and MCP Inspector integration
@@ -31,7 +31,7 @@ Model Context Protocol (MCP) is an open standard for securely connecting AI syst
 
 ## Prerequisites
 
-- **Node.js** (>=18.x): [Download](https://nodejs.org/)
+- **Node.js** (>=20.x): [Download](https://nodejs.org/)
 - **Git**: For version control
 
 ## Quick Start
@@ -660,12 +660,18 @@ npm run cli -- get-ip-details 8.8.8.8 --jq "{ip: query, country: country}"  # JM
 
 **MCP Tools:**
 - `ip_get_details` - IP geolocation lookup for AI assistants
-  - Parameters:
-    - `ipAddress` (optional): IP address to lookup (omit for current device's public IP)
-    - `includeExtendedData` (optional, default: `false`): Include ASN, host, organization data (requires API token)
-    - `useHttps` (optional, default: `true`): Use HTTPS for API calls
-    - `jq` (optional): JMESPath expression to filter/transform response
-    - `outputFormat` (optional, default: `"toon"`): Output format - "toon" or "json"
+- `ip_get_details_link` - Same lookup + resource link output for resource-aware clients
+
+Both tools share the same parameters:
+- `ipAddress` (optional): IP address to lookup (omit for current device's public IP)
+- `includeExtendedData` (optional, default: `false`): Include ASN, host, organization data (requires API token)
+- `useHttps` (optional, default: `true`): Use HTTPS for API calls
+- `jq` (optional): JMESPath expression to filter/transform response
+- `outputFormat` (optional, default: `"toon"`): Output format - "toon" or "json"
+
+Output behavior:
+- `ip_get_details`: returns one `text` content block
+- `ip_get_details_link`: returns the same first `text` block plus a `resource_link` block (`ip://<resolved-ip>`)
 
 **MCP Resources:**
 - `ip://{ipAddress}` - IP details resource template (e.g., `ip://8.8.8.8`, `ip://1.1.1.1`)
@@ -713,7 +719,7 @@ PORT=3001                    # Custom port
    npm run cli -- your-command
    npm run mcp:stdio    # Test with MCP Inspector
    ```
-4. **Publish:** `npm publish` (requires npm login)
+4. **Release:** Push conventional commits to `main` and let semantic-release publish automatically via GitHub Actions (OIDC trusted publishing).
 
 ## Testing Strategy
 
