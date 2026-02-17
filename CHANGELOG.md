@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/aashari/boilerplate-mcp-server/compare/v3.1.0...v3.2.0) (2026-02-17)
+
+
+### Features
+
+* harden HTTP transport security and add tool annotations ([5919f9f](https://github.com/aashari/boilerplate-mcp-server/commit/5919f9f4c1e416da1a6f5c9ce01174a56624ba90))
+
 # [3.1.0](https://github.com/aashari/boilerplate-mcp-server/compare/v3.0.0...v3.1.0) (2026-02-17)
 
 
